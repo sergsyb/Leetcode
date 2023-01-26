@@ -1,0 +1,31 @@
+2199 - Finding the Topic of Each Post
+
+select post_id,  isnull(STRING_AGG(topic_id, ',') WITHIN GROUP (ORDER BY topic_id), 'Ambiguous!')  topic_id
+from (
+	select distinct post_id,  topic_id from Posts2199 p left join  Keywords2199 k
+	on p.content like '% '+trim(k.word)+'%') d
+	GROUP BY post_id
+
+
+--------------------------------------------------
+create table Keywords2199
+(topic_id  int ,
+ word   varchar )
+
+create table Posts2199
+(post_id int,
+content varchar (100)
+)
+
+
+insert Keywords2199 values 
+( 1    , 'handball' ),
+( 1    , 'football' ),
+( 3    , 'WAR' ),
+( 2    , 'Vaccine' )
+
+insert Posts2199 values 
+( 1   , 'We call it soccer They call it football hahaha                        ' ),
+( 2   , 'Americans prefer basketball while Europeans love handball and football' ),
+( 3   , 'stop the war and play handball                                        ' ),
+( 4   , 'warning I planted some flowers this morning and then got vaccinated   ' )

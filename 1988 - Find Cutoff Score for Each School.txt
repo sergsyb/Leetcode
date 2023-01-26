@@ -1,0 +1,27 @@
+1988 - Find Cutoff Score for Each School
+
+
+select school_id,  isnull (min(score), -1) min_score 
+from Schools1988 s left join Exam1988 e on s.capacity>=student_count
+group by school_id, capacity
+
+
+-----------------------------------------
+create table Schools1988
+(school_id int, capacity int )
+
+create table Exam1988
+( score int, student_count int )
+
+insert Schools1988 values 
+( 11  , 151) ,
+( 5   , 48 ) ,
+( 9   , 9  ) ,
+( 10  , 99 )
+           
+insert Exam1988 values
+( 975   , 10   ) ,
+( 966   , 60   ) ,
+( 844   , 76   ) ,
+( 749   , 76   ) ,
+( 744   , 100  ) 

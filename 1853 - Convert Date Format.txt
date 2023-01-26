@@ -1,0 +1,7 @@
+SELECT  DATENAME(weekday, orderdate) + ', ' +  DATENAME(month,orderdate)
+ + ', ' +  DATENAME(day,orderdate)  + ', ' +  DATENAME(year,orderdate)
+FROM ( VALUES
+('2022-04-12'),
+('2021-08-09'),
+('2020-06-26'))
+AS O( orderdate);

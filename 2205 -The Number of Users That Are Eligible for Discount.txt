@@ -1,0 +1,22 @@
+2205. The Number of Users That Are Eligible for Discount
+
+select count(user_id) user_cnt  from (
+	select user_id , sum(amount) sum_amount
+	from Purchases2205 
+	where time_stamp between '2022-03-08 00:00:00' and '2022-03-20 00:00:00'
+	group by user_id
+)t where sum_amount - 1000 >=0
+
+-----------------------------------
+create table Purchases2205
+(
+user_id   int,
+time_stamp  datetime,
+amount       int
+)
+
+insert Purchases2205 values 
+( 1       , '2022-04-20 09:03:00' , 4416 )  ,
+( 2       , '2022-03-19 19:24:02' , 678  )  ,
+( 3       , '2022-03-18 12:03:09' , 4523 )  ,
+( 3       , '2022-03-30 09:43:42' , 626  )

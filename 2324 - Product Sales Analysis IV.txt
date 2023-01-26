@@ -1,0 +1,35 @@
+select user_id, product_id from (
+	select user_id, product_id, rank () over (partition by user_id order by totall_money desc) rn
+	from (
+		select s.user_id, p. product_id , sum (quantity) * price as totall_money
+		from Product2324 p join Sales2324 s
+		on s.product_id=p.product_id
+		group by s.user_id, p. product_id, price
+	) e
+)w
+where rn=1
+
+-------
+create table Sales2324
+( sale_id     int   ,
+ product_id  int   ,
+ user_id     int   ,
+ quantity    int  )
+
+ create table Product2324
+(  product_id    int  ,
+ price       int  )
+                      
+
+insert Sales2324 values 
+( 1       , 1          , 101     , 10  )     ,
+( 2       , 3          , 101     , 7   )     ,
+( 3       , 1          , 102     , 9   )     ,
+( 4       , 2          , 102     , 6   )     ,
+( 5       , 3          , 102     , 10  )     ,
+( 6       , 1          , 102     , 6   ) 
+
+insert Product2324 values 
+( 1 , 10),
+( 2 , 25),
+( 3 , 15)

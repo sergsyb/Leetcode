@@ -1,0 +1,1 @@
+select count(distinct customer_id) as number_of_rich_ct   from Store where amount >500     

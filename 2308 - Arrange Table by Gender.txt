@@ -1,0 +1,33 @@
+select user_id , gender from (
+	select user_id , gender , ROW_NUMBER() over (partition by gender order by user_id ) rn, 
+	case when gender='female' then 1
+		  when gender='other' then 2 else 3 end  g2
+	from Genders2308
+	) t
+	order by rn, g2, user_id
+
+---- Variant with IIF insted of case
+
+select user_id , gender from (
+	select user_id , gender , ROW_NUMBER() over (partition by gender order by user_id ) rn, 
+	iif (gender='female', 1, iif (gender='other', 2,3)) g2
+	from Genders2308
+) t
+order by rn, g2, user_id
+
+
+---------------
+create table Genders2308(
+ user_id   int    , 
+ gender    varchar (10))
+
+ insert Genders2308 values 
+( 4  , 'male  ' ),
+( 7  , 'female' ),
+( 2  , 'other ' ),
+( 5  , 'male  ' ),
+( 3  , 'female' ),
+( 8  , 'male  ' ),
+( 6  , 'other ' ),
+( 1  , 'other ' ),
+( 9  , 'female' )

@@ -1,0 +1,25 @@
+select city_id, day, degree  from (
+	select city_id, day, degree , 
+	ROW_NUMBER() over (partition by city_id order by degree desc, day )  rn
+	from Weather2314) t
+	where rn=1
+	order by city_id
+
+--------------------------------------------
+create table Weather2314
+(
+city_id int,
+day date,
+degree int
+)
+
+	insert Weather2314 values 
+( 1       , '2022-01-07' , -12 )   ,
+( 1       , '2022-03-07' , 5   )   ,
+( 1       , '2022-07-07' , 24  )   ,
+( 2       , '2022-08-07' , 37  )   ,
+( 2       , '2022-08-17' , 37  )   ,
+( 3       , '2022-02-07' , -7  )   ,
+( 3       , '2022-12-07' , -6  )  
+
+

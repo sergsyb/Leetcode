@@ -1,0 +1,28 @@
+-- 2066. Account Balance
+
+select account_id , day, sum (case when type = 'Deposit' then amount else -1*amount end) 
+over (partition by account_id order by day) as balance
+from Transactions2066
+
+
+
+------------------------------------------------
+create table Transactions2066
+(
+account_id int,
+day datetime,
+type varchar(10),
+amount int
+)
+
+insert Transactions2066 values
+
+( 1          , '2021-11-07' , 'Deposit' , 2000 )  ,
+( 1          , '2021-11-09' , 'Withdraw' , 1000 )  ,
+( 1          , '2021-11-11' , 'Deposit' , 3000 )  ,
+( 2          , '2021-12-07' , 'Deposit' , 7000 )  ,
+( 2          , '2021-12-12' , 'Withdraw' , 7000 )
+
+
+
+

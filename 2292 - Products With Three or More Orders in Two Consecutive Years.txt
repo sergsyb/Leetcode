@@ -1,0 +1,49 @@
+
+
+---Variant #1 use LAG function -- Lag is better then self join
+
+with prod_year as (
+  select product_id, purchase_year,  lag (purchase_year) over (partition by product_id order by  purchase_year) as prev_year
+  from (
+	select product_id, year(purchase_date) purchase_year
+	from Orders2292
+	group by product_id, year(purchase_date) having count(product_id)>=3
+  )r
+)
+select product_id from prod_year where purchase_year- prev_year=1 
+
+
+>>> Table 'Orders2292'. Scan count 1, logical reads 1
+
+------- Variant#2 - use self join with c1.purchase_year=c2.purchase_year+1
+
+with cte1 as
+(
+	select product_id, year(purchase_date) purchase_year
+	from Orders2292
+	group by product_id, year(purchase_date) having count(product_id)>=3
+)
+select distinct c1.product_id, *
+from cte1 c1 join cte1 c2
+on c1.product_id=c2.product_id and c1.purchase_year=c2.purchase_year+1
+
+>>> Table 'Orders2292'. Scan count 3, logical reads 3
+
+
+--------------------------------------------------
+-----------------------------------------------
+create table Orders2292
+(order_id       int  ,
+ product_id     int  ,
+ quantity       int  ,
+ purchase_date  date )
+
+
+ insert Orders2292 values
+ ( 1  , 1  , 7  , '2020-03-16' )   ,
+( 2  , 1  , 4  , '2020-12-02' )   ,
+( 3  , 1  , 7  , '2020-05-10' )   ,
+( 4  , 1  , 6  , '2021-12-23' )   ,
+( 5  , 1  , 5  , '2021-05-21' )   ,
+( 6  , 1  , 6  , '2021-10-11' )   ,
+( 7  , 2  , 6  , '2022-10-11' )  

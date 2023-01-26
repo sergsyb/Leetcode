@@ -1,0 +1,48 @@
+2041. Accepted Candidates From the Interviews
+
+
+  select candidate_id r
+  from
+  Candidates2041 c join  Rounds2041 r 
+  on c.interview_id=r.interview_id
+ -where years_of_exp>2 
+  group by candidate_id having sum (score)>15
+
+
+
+
+
+
+----------------------------------------------------------
+
+create table Candidates2041
+( candidate_id  int      ,
+ name          varchar (15) ,
+ years_of_exp  int      ,
+ interview_id  int      )
+
+create table Rounds2041
+(
+ interview_id  int  ,
+ round_id      int  ,
+ score         int  )
+
+
+insert  Candidates2041 values 
+( 11  , 'Atticus' , 1  , 101 )         ,
+( 9   , 'Ruben  ' , 6  , 104 )         ,
+( 6   , 'Aliza  ' , 10 , 109 )         ,
+( 8   , 'Alfredo' , 0  , 107 )         
+                             
+insert Rounds2041 values 
+( 109          , 3        , 4  )   ,
+( 101          , 2        , 8  )   ,
+( 109          , 4        , 1  )   ,
+( 107          , 1        , 3  )   ,
+( 104          , 3        , 6  )   ,
+( 109          , 1        , 4  )   ,
+( 104          , 4        , 7  )   ,
+( 104          , 1        , 2  )   ,
+( 109          , 2        , 1  )   ,
+( 104          , 2        , 7  )   ,
+( 107          , 2        , 3  )   

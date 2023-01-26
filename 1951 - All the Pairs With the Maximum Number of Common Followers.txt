@@ -1,0 +1,45 @@
+--- 1951 - All the Pairs With the Maximum Number of Common Followers
+
+------- Variant #1 with <> - все возможные пары  тут LIO меньше ----------------
+select * from (
+	select top 1 with TIES user_1,  user_2 from  --- Приходится выбирать пару с меньшим LIO
+	(
+		select r1.user_id user_1, r2.user_id user_2, count( r1.follower_id) follow_cnt from Relations1951 r1 
+		join Relations1951 r2
+		on r1.user_id <> r2.user_id and r1.follower_id= r2.follower_id
+		group by r1.user_id , r2.user_id
+	)w order by follow_cnt desc
+) t where user_1<user_2
+>>>>>>> Table 'Worktable'. Scan count 0, logical reads 0
+>>>>>>> Table 'Relations1951'. Scan count 2, logical reads 10
+
+
+------- Variant #2 with < - только пары где user1 < user2   ----------------
+select top 1 user1, user2 from (
+	select r1.user_id as user1, r2.user_id user2, count( r1.follower_id) follow_cnt 
+	from Relations1951 r1 
+		join Relations1951 r2
+		on r1.user_id < r2.user_id and r1.follower_id= r2.follower_id
+		group by r1.user_id, r2.user_id
+)e order by follow_cnt  desc
+
+>>>>>>> Table 'Worktable'. Scan count 9, logical reads 36
+>>>>>>> Table 'Relations1951'. Scan count 2, logical reads 2
+
+--------------------------------------------------------------------
+create table Relations1951
+(
+user_id int,
+follower_id int
+)
+
+insert Relations1951 values
+( 1  , 3 ) ,
+( 2  , 3 ) ,
+( 7  , 3 ) ,
+( 1  , 4 ) ,
+( 2  , 4 ) ,
+( 7  , 4 ) ,
+( 1  , 5 ) ,
+( 2  , 6 ) ,
+( 7  , 5 )

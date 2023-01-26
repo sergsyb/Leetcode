@@ -1,0 +1,60 @@
+with bus_prev as (
+	select *, isnull(lag(arrival_time)  over (order by arrival_time ), -1) prev_bus_time  from Buses2142
+)
+ , bus_and_pass as (
+	select bus_id, passenger_id 
+	, b.arrival_time as b_arrival_time
+	, b.prev_bus_time
+	, p.arrival_time p_arrival_time
+	from bus_prev b  left join Passengers2142 p
+	on p.arrival_time <=b.arrival_time and p.arrival_time>b.prev_bus_time
+)
+select bus_id, count (passenger_id) cnt  from bus_and_pass
+group by bus_id
+
+>> Table 'Passengers2142'. Scan count 1, logical reads 3
+>> Table 'Buses2142'.      Scan count 1, logical reads 1
+
+---- Variant 2 --------------
+
+WITH t AS
+(
+    SELECT passenger_id, MIN(b.arrival_time) AS arrival_time
+    FROM Passengers2142 p
+    INNER JOIN Buses2142 b
+    ON p.arrival_time <= b.arrival_time
+    GROUP BY passenger_id
+)
+
+--# Boarding time and bus id have 1 to 1 correspondence
+SELECT bus_id, COUNT(t.arrival_time) AS passengers_cnt
+FROM Buses2142 b
+LEFT JOIN t
+ON b.arrival_time = t.arrival_time
+GROUP BY bus_id
+ORDER BY bus_id
+
+>> Table 'Worktable'. Scan count 1, logical reads 12
+>> Table 'Passengers2142'. Scan count 1, logical reads 3
+>> Table 'Buses2142'. Scan count 2, logical reads 2
+
+
+------------------------------------------------
+create table Buses2142
+(bus_id int,
+arrival_time int)
+
+create table Passengers2142
+(passenger_id int, 
+arrival_time int)
+
+insert Buses2142 values      
+( 1  , 2 )  ,
+( 2  , 4 )  ,
+( 3  , 7 )  
+
+insert Passengers2142 values 
+( 11  , 1 ) ,
+( 12  , 5 ) ,
+( 13  , 6 ) ,
+( 14  , 7 ) 

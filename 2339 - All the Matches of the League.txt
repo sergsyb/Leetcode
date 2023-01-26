@@ -1,0 +1,16 @@
+
+
+ select  t1.team_name as home_team, t2.team_name away_team
+ from Teams2339 t1 cross join Teams2339 t2
+ where t1.team_name<>t2.team_name
+
+
+-------------
+create table Teams2339
+(team_name varchar (20))
+
+
+insert Teams2339 values 
+ ('Leetcode FC'),
+ ('Ahly SC'),
+ ('Real Madrid')

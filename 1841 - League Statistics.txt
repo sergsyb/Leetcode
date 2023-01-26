@@ -1,0 +1,46 @@
+
+  with cte1 as (
+  select *, case when home_team_goals>away_team_goals then 3 else
+ case when  home_team_goals<away_team_goals then 0 else 1 end end  as home_points,
+ case when home_team_goals<away_team_goals then 3 else
+ case when  home_team_goals>away_team_goals then 0 else 1 end end  as away_points
+
+from  Matches1841),
+ cte2 as (
+
+select home_team_id as team_id, home_team_goals as goal_for,  away_team_goals as  goal_against,   home_points as points
+from cte1
+union all
+select away_team_id as team_id, away_team_goals as goal_for, home_team_goals as goal_against,  away_points  as points
+from cte1
+)
+
+
+select team_name, count(*) matches_played, sum(points) as points,
+  sum(goal_for) goal_for, sum ( goal_against) as   goal_against,
+  sum(goal_for)-sum ( goal_against) as  goal_diff
+from cte2 c join Teams1841 t  on t.team_id=c.team_id
+group by c.team_id, team_name
+
+-----------------------------------------------------------------
+ create table Teams1841(
+ team_id    int,     
+ team_name varchar (20))
+
+
+ create table Matches1841
+ ( home_team_id     int,  
+  away_team_id     int,  
+  home_team_goals  int,  
+  away_team_goals  int)  
+
+  insert  Teams1841 values
+( 1  ,     'Ajax'     ) ,
+( 4  ,     'Dortmund' ) ,
+( 6  ,     'Arsenal'  )    
+
+insert Matches1841 values
+( 1  , 4  , 0  , 1 ) ,
+( 1  , 6  , 3  , 3 ) ,
+( 4  , 1  , 5  , 2 ) ,
+( 6  , 1  , 0  , 0 )   

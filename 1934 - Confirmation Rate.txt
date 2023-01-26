@@ -1,0 +1,47 @@
+--- 1934 - Confirmation Rate
+
+select s.user_id, isnull(conf_rate, 0) confirmation_rate from  Signups1934 s left join 
+(
+	select  user_id, 1.*sum(case when action ='confirmed' then 1 else 0 end) / count( action) as conf_rate
+	from  Confirmations1934 group by user_id
+) as t 
+on s.user_id=t.user_id
+
+------ Variant 2
+--- Or In 1 query . Count( *) because count( action) returns 0 (without NULL), but count( *) returns 1 (incl NULL). 
+--- Это проще использовать 1 вместо 0 в count, чтобы не проверять на 0 при делении
+
+select s.user_id,  1.*sum(case when action ='confirmed' then 1 else 0 end) / count( *) as confirmation_rate 
+from  Signups1934 s 
+left join Confirmations1934 c on s.user_id=c.user_id 
+group by s.user_id
+
+
+
+---------------------------------------------------------------------------
+create table Signups1934
+(user_id int,
+time_stamp datetime)
+
+create table Confirmations1934
+(user_id int,
+time_stamp datetime,
+action varchar (10))
+
+insert Signups1934 values 
+( 3       , '2020-03-21 10:16:13') ,
+( 7       , '2020-01-04 13:57:59') ,
+( 2       , '2020-07-29 23:09:44') ,
+( 6       , '2020-12-09 10:39:37') 
+
+insert Confirmations1934 values
+( 3       , '2021-01-06 03:30:46' , 'timeout  ' ),
+( 3       , '2021-07-14 14:00:00' , 'timeout  ' ),
+( 7       , '2021-06-12 11:57:29' , 'confirmed' ),
+( 7       , '2021-06-13 12:58:28' , 'confirmed' ),
+( 7       , '2021-06-14 13:59:27' , 'confirmed' ),
+( 2       , '2021-01-22 00:00:00' , 'confirmed' ),
+( 2       , '2021-02-28 23:59:59' , 'timeout  ' )
+
+
+

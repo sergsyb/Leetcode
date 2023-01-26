@@ -1,0 +1,24 @@
+-- 2159. Order Two Columns Independently
+with cte1 as (
+	select *, ROW_NUMBER() over (order by first_col) rn1, 
+	ROW_NUMBER() over (order by second_col  desc) rn2
+	from Data2159
+)
+
+select c1.first_col, c2.second_col 
+from cte1 c1 join cte1 c2
+on   c1.rn1=c2.rn2
+
+
+
+create table Data2159
+(
+first_col int,
+second_col   int
+)
+
+insert Data2159 values 
+(4,2),
+(2,3),
+(3,1),
+(1,4)

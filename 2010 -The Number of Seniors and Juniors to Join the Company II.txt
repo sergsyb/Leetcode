@@ -1,0 +1,60 @@
+
+  with choose_senior as (
+ select  *, 
+ 70000-sum (salary) over (partition by experience order by salary, employee_id) rest
+ from Candidates2010 where experience='Senior' 
+ )
+, choose_junior as (
+ select  *, 
+ 
+(select isnull(min(rest), 70000) as rest  from choose_senior where rest>0) 
+ - sum (salary) over (partition by experience order by salary, employee_id) rest
+ from Candidates2010 where experience='Junior'
+ )
+
+ select * from choose_senior where rest >=0
+ union all
+ select  * from choose_junior where rest >=0
+
+
+
+ -------------------------------------------------------
+ create table Candidates2010
+ (employee_id  int , 
+ experience   varchar(10) ,
+ salary       int)
+
+
+ Example 1
+ 
+ delete Candidates2010
+ insert Candidates2010 values
+ ( 1   , 'Junior'     , 10000)  ,
+( 9   , 'Junior'     , 15000)  ,
+( 2   , 'Senior'     ,20000)  ,
+( 11  , 'Senior'     , 16000)  ,
+( 13  , 'Senior'     , 50000)  ,
+( 4   , 'Junior'     , 40000)  
+
+
+ Example 2
+
+ delete Candidates2010
+ insert Candidates2010 values
+ ( 1   , 'Junior'     , 10000)  ,
+( 9   , 'Junior'     , 10000)  ,
+( 2   , 'Senior'     ,80000)  ,
+( 11  , 'Senior'     , 80000)  ,
+( 13  , 'Senior'     , 80000)  ,
+( 4   , 'Junior'     , 40000)  
+
+ Example 3
+
+ delete Candidates2010
+  insert Candidates2010 values
+  ( 1   , 'Junior'     , 10000)  ,
+( 9   , 'Junior'     , 10000)  ,
+( 2   , 'Senior'     , 69000)  ,
+( 11  , 'Senior'     , 80000)  ,
+( 13  , 'Senior'     , 80000)  ,
+( 4   , 'Junior'     , 40000)  

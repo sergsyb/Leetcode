@@ -1,0 +1,37 @@
+with bus_prev as (
+	select *, isnull(lag(arrival_time)  over (order by arrival_time ), -1) prev_bus_time  from Buses2153
+)
+--, bus_and_pass as (
+	select bus_id, passenger_id 
+	, b.arrival_time as b_arrival_time
+	, b.prev_bus_time
+	, p.arrival_time p_arrival_time, capacity
+
+	,capacity-  count (passenger_id) over (partition by bus_id order by p.arrival_time,  p.passenger_id) overpass
+
+	from bus_prev b  left join Passengers2153 p
+	on p.arrival_time <=b.arrival_time and p.arrival_time>b.prev_bus_time 
+
+
+
+-------------------------
+create table Buses2153
+(bus_id int,
+arrival_time int,
+capacity  int   )
+
+create table Passengers2153
+(passenger_id int, 
+arrival_time int)
+
+insert Buses2153 values      
+( 1  , 2, 1 )  ,
+( 2  , 4, 10 )  ,
+( 3  , 7, 2 )  
+
+insert Passengers2153 values 
+( 11  , 1 ) ,
+( 12  , 1) ,
+( 13  , 5 ) ,
+( 14  , 6 ), 
+( 15  , 7 )

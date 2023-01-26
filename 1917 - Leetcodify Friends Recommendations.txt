@@ -1,0 +1,61 @@
+
+with cte1 as (  --------- Найти всех пользователей кто слушал одни и те же песни в один день ----------------------
+	select distinct l1.user_id as user1_id, l2.user_id as user2_id, l1.song_id, l1.day  from Listens1917 l1 
+	join Listens1917 l2 on l1.day=l2.day and l1.song_id=l2.song_id and l1.user_id<>l2.user_id
+)
+,cte2 as (      ----------- Одна пара пользователей слушала как минимум 3 песни в один день.
+	select user1_id, user2_id, day from cte1 
+	group by user1_id, user2_id, day
+	having count (song_id) >=3
+)
+
+/*            --- Можно через Left join находя тех, кто не входит в уже существующих друзей. (f.user1_id is null and f.user2_id is null)
+						--- Table 'Friendship1917'. Scan count 7, logical reads 12
+						--- Table 'Listens1917'. Scan count 2, logical reads 2
+
+select c.user1_id, c.user2_id from cte2 c left join 
+(	select user1_id, user2_id from Friendship1917
+	union 
+	select user2_id, user1_id from Friendship1917) f
+on f.user1_id=c.user1_id and f.user2_id=c.user2_id
+where f.user1_id is null and f.user2_id is null
+
+*/
+            --- Или через множества Except  ----- НО LIO больше Table 'Friendship1917'. Scan count 6, logical reads 11
+	    ---							Table 'Listens1917'.  Scan count 2, logical reads 17
+
+select user1_id, user2_id from cte2
+except 
+(
+	select user1_id, user2_id from Friendship1917
+	union 
+	select user2_id, user1_id from Friendship1917
+)
+
+-------------------------------------------------------
+create table  Listens1917
+(user_id  int, song_id int,    day  date );
+
+create table Friendship1917
+(user1_id  int, user2_id int);
+
+insert Listens1917 values
+( 1       , 10      , '2021-03-15' ),
+( 1       , 11      , '2021-03-15' ),
+( 1       , 12      , '2021-03-15' ),
+( 2       , 10      , '2021-03-15' ),
+( 2       , 11      , '2021-03-15' ),
+( 2       , 12      , '2021-03-15' ),
+( 3       , 10      , '2021-03-15' ),
+( 3       , 11      , '2021-03-15' ),
+( 3       , 12      , '2021-03-15' ),
+( 4       , 10      , '2021-03-15' ),
+( 4       , 11      , '2021-03-15' ),
+( 4       , 13      , '2021-03-15' ),
+( 5       , 10      , '2021-03-16' ),
+( 5       , 11      , '2021-03-16' ),
+( 5       , 12      , '2021-03-16' )
+
+
+insert Friendship1917 values
+(1 , 2)

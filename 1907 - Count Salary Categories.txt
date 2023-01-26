@@ -1,0 +1,34 @@
+--  1907 - Count Salary Categories ----------
+
+select categoryall, count (Category) cnt from 
+(
+values ('Low Salary'), ('High Salary'), ('Average Salary')
+) as allcat (categoryall  ) left join 
+(select case when income<20000 then 'Low Salary' else 
+			case when income>50000 then 'High Salary' else 'Average Salary' end end as Category
+				from Accounts1907) cat
+on Category=categoryall
+group by categoryall
+
+-------Variant 2 ------------------
+with allcat as (
+select  'Low Salary' as categoryall
+union
+select 'High Salary'
+union 
+select 'Average Salary'
+),
+cat as (
+ select case when income<20000 then 'Low Salary' else 
+			case when income>50000 then 'High Salary' else 'Average Salary' end end as Category
+				from Accounts1907)
+
+select categoryall, count (Category) cnt from allcat left join cat on Category=categoryall
+group by categoryall
+
+
+------------------------------------------------------------------------------
+create table Accounts1907 (account_id int, income int);
+insert Accounts1907 values (3 , 108939), (2 , 12747),(8, 87709),(6 , 91796 )
+
+

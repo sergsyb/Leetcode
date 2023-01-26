@@ -1,0 +1,49 @@
+
+select  
+sp.salesperson_id, sp.name, isnull(sum(s.price), 0) price
+from Salesperson2372 sp
+left join Customer2372 c on c.salesperson_id=sp.salesperson_id 
+left join Sales2372 s on c.customer_id=s.customer_id
+group by sp.salesperson_id, sp.name
+
+
+------------------------------------------------------------
+create table Salesperson2372
+(salesperson_id int, 
+name varchar (10)
+)
+
+create table Customer2372
+(customer_id  int,
+salesperson_id int 
+)
+
+create table Sales2372
+(
+sale_id int,
+customer_id int, 
+price int
+)
+
+
+insert Salesperson2372 values
+( 1 , 'Alice') ,
+( 2 , 'Bob  ') ,
+( 3 , 'Jerry')
+
+insert Customer2372 values
+( 1  , 1 )  ,
+( 2  , 1 )  ,
+( 3  , 2 )  
+
+
+insert Sales2372 values
+( 1 , 2  , 892 )  ,
+( 2 , 1  , 354 )  ,
+( 3 , 3  , 988 )  ,
+( 4 , 3  , 856 )   
+
+
+
+
+

@@ -1,0 +1,40 @@
+with cte1 as(
+select team_id ,  name, points, rank() over (order by points desc) rn1
+from TeamPoints2175
+)
+
+select c1.team_id ,  name ,
+--rn1, c1.points+c2.points_change as last_points, 
+--rank () over (order by (c1.points+c2.points_change) desc, name ) rn2, 
+c1.rn1-rank () over (order by (c1.points+c2.points_change ) desc, name )  as dif_rank
+from cte1 c1 
+join PointsChange2175 c2
+on c1.team_id=c2.team_id
+
+-------------------------------------
+
+create table TeamPoints2175
+(
+team_id  int,   
+name varchar(15),  
+points int     
+)
+
+create table PointsChange2175
+(
+team_id int,    
+points_change int
+)
+
+insert TeamPoints2175 values 
+( 3  , 'Algeria    ' , 1431 )  , 
+( 1  , 'Senegal    ' , 2132 )  , 
+( 2  , 'New Zealand' , 1402 )  , 
+( 4  , 'Croatia    ' , 1817 )    
+                                 
+                                 
+insert   PointsChange2175 values                               
+( 3  , 399  )   ,                
+( 2  , 0    )   ,                
+( 4  , 13   )   ,                
+( 1  , -22  )     

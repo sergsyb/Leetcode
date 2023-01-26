@@ -1,0 +1,27 @@
+1965 - Employees With Missing Information
+
+select e.employee_id  from Employees1965 e left join Salaries1965 s
+on e.employee_id=s.employee_id 
+where  s.salary is null 
+union 
+select s.employee_id  from Salaries1965 s left join Employees1965 e
+on e.employee_id=s.employee_id 
+where e.name is null 
+
+
+create table Employees1965 (
+employee_id int, name varchar(25))
+
+create table Salaries1965
+(employee_id int, salary int)
+
+
+insert Employees1965 values
+( 2 , 'Crew     '),
+( 4 , 'Haven    '),
+( 5 , 'Kristian ')
+
+insert Salaries1965 values
+( 5 , 76071 ) ,
+( 1 , 22517 ) ,
+( 4 , 63539 ) 

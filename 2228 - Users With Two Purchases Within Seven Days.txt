@@ -1,0 +1,23 @@
+2228 - Users With Two Purchases Within Seven Days
+
+create table Purchases2228
+( purchase_id  int,
+ user_id  int,
+ purchase_date date
+)
+
+insert Purchases2228 values 
+( 4 , 2  , '2022-03-13')    ,
+( 1 , 5  , '2022-02-11')    ,
+( 3 , 7  , '2022-06-19')    ,
+( 6 , 2  , '2022-03-20')    ,
+( 5 , 7  , '2022-06-19')    ,
+( 2 , 2  , '2022-06-08')  
+
+
+select distinct user_id from (
+	select *  
+	, lag(purchase_date)  over (partition by user_id order by  purchase_date) as prev_date
+	from Purchases2228
+)e 
+where  DATEDIFF(day, prev_date, purchase_date) <=7

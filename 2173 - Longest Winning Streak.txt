@@ -1,0 +1,38 @@
+2173. Longest Winning Streak
+
+with cte1 as(
+select *, 
+ROW_NUMBER () over (order by match_day) rn_days, 
+ROW_NUMBER () over (partition by player_id order by match_day) rn_player
+from  Matches2173
+) 
+
+select a.player_id, isnull(max (cnt_res), 0) max_win_cnt from 
+(select distinct  player_id  from Matches2173 ) a
+left join 
+ (
+	select player_id, result, count(result) cnt_res
+	from cte1
+	group by player_id, result, (rn_days - rn_player)
+) t 
+on a.player_id=t.player_id and result='Win'
+
+	group by a.player_id
+
+
+----------------------------------------------
+create table Matches2173(
+ player_id    int,  
+ match_day    date, 
+ result       varchar (10))
+
+ insert Matches2173 values
+ ( 1         , '2022-01-17' , 'Win ' )  ,
+( 1         , '2022-01-18' , 'Win ' )  ,
+( 1         , '2022-01-25' , 'Win ' )  ,
+( 1         , '2022-01-31' , 'Draw' )  ,
+( 1         , '2022-02-08' , 'Win ' )  ,
+( 2         , '2022-02-06' , 'Lose' )  ,
+( 2         , '2022-02-08' , 'Lose' )  ,
+( 3         , '2022-03-30' , 'Win ' )  
+

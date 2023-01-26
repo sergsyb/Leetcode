@@ -1,0 +1,50 @@
+-- 1990 - Count the Number of Experiments
+
+-- Variant #1 with cte
+with alltests as 
+(	select *  from(
+	values ('Android'), ('IOS'), ('Web')
+	) as all_plat (exp_platform) 
+    cross join 
+	(select *  from(
+	values ('Reading'), ('Sports'), ('Programming')
+	) as all_expir (exp_name) )f
+)
+
+select exp_platform as platform , exp_name as experiment_name , isnull(g.cnt, 0) num_experiments   from alltests a  
+left join ( 
+	select platform, experiment_name, count (experiment_id ) cnt
+	from Experiments1990 
+	group by  platform, experiment_name
+	) g on g.platform=a.exp_platform and g.experiment_name=a.exp_name
+	order by 1
+
+-- Variant #2 without cte
+
+	select exp_platform as platform , exp_name as experiment_name , isnull(g.cnt, 0) num_experiments  
+	from
+	(  values ('Android'), ('IOS'), ('Web') ) as all_plat (exp_platform) 
+    	cross join 
+	( values ('Reading'), ('Sports'), ('Programming') ) as all_expir (exp_name) 
+	left join ( 
+	select platform, experiment_name, count (experiment_id ) cnt
+	from Experiments1990 
+	group by  platform, experiment_name
+	) g on g.platform=exp_platform and g.experiment_name=exp_name
+	order by 1
+
+---------------------------------------------------------------------
+create table Experiments1990
+(
+experiment_id int,
+platform   varchar(20),     
+experiment_name varchar(20)
+)
+
+insert  Experiments1990 values
+( 4 , 'IOS    '  , 'Programming'    ) ,
+( 13, 'IOS    '  , 'Sports     '    ) ,
+( 14, 'Android'  , 'Reading    '    ) ,
+( 8 , 'Web    '  , 'Reading    '    ) ,
+( 12, 'Web    '  , 'Reading    '    ) ,
+( 18, 'Web    '  , 'Programming'    )

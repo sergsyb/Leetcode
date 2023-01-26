@@ -1,0 +1,48 @@
+--- 2084. Drop Type 1 Orders for Customers With Type 0 Orders
+
+select * from Orders2084 where customer_id in (
+	select distinct customer_id from Orders2084 where order_type=0
+) and order_type=0
+union all
+select * from Orders2084 where customer_id not in (
+	select distinct customer_id from Orders2084 where order_type=0
+) 
+>>> Table 'Orders2084'. Scan count 4, logical reads 14
+
+
+---- Variant #2 более оптимальный -- по условию если есть 0 тип, то и вывести только тип 0, 
+                                   --а если нет типа 0, то вывести только тип 1 
+
+SELECT * FROM Orders2084 o
+WHERE 
+exists (
+select 1 from (
+    SELECT customer_id, MIN(order_type) min_order
+    FROM Orders2084 
+    GROUP BY customer_id ) t 
+where t.customer_id=o.customer_id and t.min_order=o.order_type
+)
+
+>>> Table 'Orders2084'. Scan count 9, logical reads 9
+
+
+
+
+
+----------------------------------
+create table Orders2084
+(
+order_id int , 
+customer_id int , 
+order_type int 
+)
+
+insert Orders2084 values 
+(1    , 1   , 0  )  ,
+( 2    , 1   , 0 )   ,
+( 11   , 2   , 0 )   ,
+( 12   , 2   , 1 )   ,
+( 21   , 3   , 1 )   ,
+( 22   , 3   , 0 )   ,
+( 31   , 4   , 1 )   ,
+( 32   , 4   , 1 ) 

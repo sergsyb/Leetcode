@@ -1,0 +1,28 @@
+2072. The Winner University
+
+select case when NY>CA then 'New York University' 
+	        when NY<CA then 'California University' else 'No Winner'  end Winner from 
+(select
+(select count(student_id)  from NewYork2072 where score>=90) NY,
+(select count(student_id)  from California2072 where score>=90) CA
+) f
+
+
+------------
+create table NewYork2072
+ (student_id int,
+ score int)
+ 
+create table California2072
+ (student_id int,
+ score int)
+
+ insert NewYork2072 values
+ (1,90), (2,87)
+
+ insert California2072 values 
+ (2,89), (3,88)
+
+
+
+

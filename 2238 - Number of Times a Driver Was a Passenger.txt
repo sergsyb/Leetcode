@@ -1,0 +1,29 @@
+
+select r.driver_id, count(p.passenger_id) cnt
+from Rides2238 r left join (select distinct passenger_id from Rides2238) p
+on r.driver_id=p.passenger_id
+group by r.driver_id
+
+
+-----------------------------------------
+
+create table Rides2238
+(ride_id  int,  
+driver_id  int ,
+passenger_id int)
+
+
+insert Rides2238 values 
+( 1  , 7  , 1),
+( 2  , 7  , 2),
+( 3  , 11 , 1),
+( 4  , 11 , 7),
+( 5  , 11 , 7),
+( 6  , 11 , 3)
+
+
+
+
+
+
+
