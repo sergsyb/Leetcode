@@ -1,0 +1,53 @@
+601. Human Traffic of Stadium
+
+---Var0 --------------------------
+
+select id, visit_date, people from stadium s
+join (
+	select min(id) as min_id, max(id) as max_id from (
+		select id, visit_date, people, rank() over (order by id) rn
+		from stadium where  people>100) u
+	group by rn-id having count (*) >=3
+)t
+on s.id>=t.min_id and s.id<=t.max_id
+
+Estimated subree cost - 0.029
+>>> Table 'stadium'. Scan count 2, logical reads 3
+
+---Var1 --------------------------
+with cte1 as (
+	select id, visit_date, people, rank() over (order by id) rn
+	from stadium where  people>100
+	) 
+, cte2 as (
+	select  rn-id forrg from cte1
+	group by rn-id having count (*) >=3
+)
+
+select id, visit_date, people from 
+cte1 where rn-id in (select forrg from cte2)
+
+Estimated subree cost - 0.05
+>>> Table 'Worktable'. Scan count 1, logical reads 25
+>>> Table 'stadium'. Scan count 2, logical reads 3
+
+--- Var 2 ---------------- 
+with medium_id as (
+	 select id from
+     (
+	 select s.id , 
+	 LEAD(s.id) over (order by id) next,  
+	 lag(id) over (order by id) prev  
+	 from stadium s
+	 where people>100
+	 ) t
+	where next-id=1 and id-prev=1 
+)
+
+select distinct s.id, visit_date, people  
+from medium_id m
+join stadium s
+on s.id=m.id or s.id=m.id+1 or s.id=m.id-1
+
+Estimated subree cost - 0.03
+>>> Table 'stadium'. Scan count 2, logical reads 4

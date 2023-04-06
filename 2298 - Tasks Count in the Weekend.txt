@@ -1,0 +1,22 @@
+2298 -- Tasks Count in the Weekend
+
+ select 
+ sum(case when DATEPART(weekday,submit_date) in (7,1) then 1 end ) weekend_cnt,
+ sum(case when DATEPART(weekday,submit_date) in (2,3,4,5,6) then 1 end ) working_cnt
+ from 
+ Tasks2298;
+
+
+---------------------------------------
+ create table Tasks2298 (
+ task_id     int , 
+ assignee_id  int ,
+ submit_date  date )
+
+ insert Tasks2298 values 
+ ( 1    , 1  , '2022-06-13' ) ,
+( 2    , 6  , '2022-06-14' ) ,
+( 3    , 6  , '2022-06-15' ) ,
+( 4    , 3  , '2022-06-18' ) ,
+( 5    , 5  , '2022-06-19' ) ,
+( 6    , 7  , '2022-06-19' ) 

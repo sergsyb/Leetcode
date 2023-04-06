@@ -1,0 +1,12 @@
+1355. Activity Participants
+
+select activity from (
+	 select *, 
+	 ROW_NUMBER() over (order by cnt ) rn1,
+	 ROW_NUMBER() over (order by cnt desc ) rn2 from(
+		  select activity, count (*) cnt from 
+		  Friends1355
+		  group by activity
+	 ) t
+)u where rn1<>1 and rn2<>1
+

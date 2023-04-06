@@ -1,0 +1,49 @@
+1412. Find the Quiet Students in All Exams
+
+---- Var 1 with not exists --
+   with cte1 as (
+	  select *, 
+	  rank () over (partition by exam_id order by score desc ) rn_high,
+	  rank () over (partition by exam_id order by score asc ) rn_low
+	  from Exam1412
+  )
+  
+  select distinct c1.student_id, student_name  
+  from cte1 c1
+  join Student1412 s
+  on c1.student_id=s.student_id
+  where not exists 
+  (
+  select 1 from (
+		select student_id from cte1 where rn_high=1 or rn_low=1
+		)t 
+	where student_id =c1.student_id
+  )
+  
+
+LIO 32
+Table 'Worktable'. Scan count 1, logical reads 25
+Table 'Exam1412'. Scan count 2, logical reads 6
+Table 'Student1412'. Scan count 1, logical reads 1
+
+----- Var2 -- with Not IN  -- the same plan
+  with cte1 as (
+	  select *, 
+	  rank () over (partition by exam_id order by score desc ) rn_high,
+	  rank () over (partition by exam_id order by score asc ) rn_low
+	  from Exam1412
+  )
+
+  select distinct c.student_id, student_name  
+  from cte1 c
+  join Student1412 s
+  on c.student_id=s.student_id
+  where c.student_id not in (
+	  select student_id from cte1 where rn_high=1 or rn_low=1
+  )
+
+estimated subtree cost 0.056
+LIO 32
+Table 'Worktable'. Scan count 1, logical reads 25
+Table 'Exam1412'. Scan count 2, logical reads 6
+Table 'Student1412'. Scan count 1, logical reads 1

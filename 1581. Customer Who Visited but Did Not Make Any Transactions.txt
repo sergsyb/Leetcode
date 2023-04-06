@@ -1,0 +1,35 @@
+1581. Customer Who Visited but Did Not Make Any Transactions
+
+select v.customer_id , count (*) count_no_trans
+from Visits1581 v
+left join Transactions1581 t
+on t.visit_id=v.visit_id
+where t.transaction_id is null
+group by v.customer_id 
+
+==============================================
+create table Visits1581(
+visit_id     int     ,
+ customer_id  int     )
+
+ create table Transactions1581(
+ transaction_id  int     ,
+ visit_id        int     ,
+ amount          int )
+
+   insert Visits1581 values
+
+( 1        , 23)  ,
+( 2        , 9 )  ,
+( 4        , 30)  ,
+( 5        , 54)  ,
+( 6        , 96)  ,
+( 7        , 54)  ,
+( 8        , 54) 
+               
+ insert Transactions1581 values
+( 2 , 5  , 310 )   ,
+( 3 , 5  , 300 )   ,
+( 9 , 5  , 200 )   ,
+( 12, 1  , 910 )   ,
+( 13, 2  , 970 )   

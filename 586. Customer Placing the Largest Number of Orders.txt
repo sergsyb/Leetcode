@@ -1,0 +1,31 @@
+-- V1 -
+select top 1 customer_number from (
+	select customer_number, count(*) cnt
+	from Orders586
+	group by customer_number 
+	) r
+order by cnt desc
+
+-- V2 - Plan the same
+
+select top 1  customer_number
+from Orders586
+group by customer_number 
+order by  count(*) desc
+
+
+
+
+
+-------------------------------
+
+create table Orders586
+(
+order_number int,
+customer_number int)
+
+insert Orders586 values 
+(1,1),
+(2,2),
+(3,3),
+(4,3)

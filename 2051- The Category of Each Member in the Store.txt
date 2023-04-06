@@ -1,0 +1,60 @@
+2051. The Category of Each Member in the Store
+
+with cte1 as(
+	 select v.member_id, 100.0*count(p.visit_id) / count (v.visit_id) as rate 
+	 from Visits2051 v
+	 left join Purchases2051 p
+	 on p.visit_id=v.visit_id
+	 group by v.member_id
+	 )
+
+select m.member_id, name,
+case     when c.rate>80 then 'Diamond'
+	 when c.rate>=50 and c.rate<80 then 'Gold'
+	 when c.rate<50 then 'Silver' 
+	 else 'Bronze' end  as category
+from
+Members2051 m
+left join 
+cte1 c
+on c.member_id=m.member_id
+order by 1
+
+
+
+--------------------------------------
+create table Members2051(
+ member_id    int     ,
+ name         varchar )
+
+ create table Visits2051
+ (visit_id     int  ,
+ member_id    int  ,
+ visit_date   date )
+
+
+create table Purchases2051
+(visit_id        int  ,
+ charged_amount  int  )
+
+ insert Members2051 values
+ ( 9   , 'Alice  ' ),
+( 11  , 'Bob    ' ),
+( 3   , 'Winston' ),
+( 8   , 'Hercy  ' ),
+( 1   , 'Narihan' )
+                       
+insert Visits2051 values
+( 22  , 11  , '2021-10-28') ,
+( 16  , 11  , '2021-01-12') ,
+( 18  , 9   , '2021-12-10') ,
+( 19  , 3   , '2021-10-19') ,
+( 12  , 11  , '2021-03-01') ,
+( 17  , 8   , '2021-05-07') ,
+( 21  , 9   , '2021-05-12') 
+
+
+insert Purchases2051 values 
+( 12  , 2000  )  ,
+( 18  , 9000  )  ,
+( 17  , 7000  )  

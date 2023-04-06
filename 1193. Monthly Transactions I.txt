@@ -1,0 +1,23 @@
+ 1193. Monthly Transactions I
+
+  select convert(char(7),trans_date) as month, country, count(1) trans_count , 
+  count(case when state='approved' then 1 end)  approved_count,
+  sum (amount) trans_total_amount,
+  sum(case when state='approved' then amount else 0 end) approved_total_amount
+  from Transactions1193
+  group by convert(char(7),trans_date), country
+
+---------------------------------
+
+  create table Transactions1193(
+   id             int     ,
+ country        varchar(15) ,
+ state          varchar(15)    ,
+ amount         int     ,
+ trans_date     date    );
+
+  insert Transactions1193 values 
+ ( 121  , 'US'      , 'approved' , 1000   , '2018-12-18') ,
+( 122  , 'US'      , 'declined' , 2000   , '2018-12-19') ,
+( 123  , 'US'      , 'approved' , 2000   , '2019-01-01') ,
+( 124  , 'DE'      , 'approved' , 2000   , '2019-01-07') 

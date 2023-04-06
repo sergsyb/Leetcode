@@ -1,0 +1,82 @@
+1596. The Most Frequently Ordered Products for Each Customer
+
+-- Var 1 the plan cheaper but LIO more -------------------
+ select  customer_id, p.product_id , product_name  from 
+ (
+	 select  customer_id, product_id, rank() over (partition by customer_id order by cnt desc ) rn
+	 from ( 
+		 select customer_id, product_id, count(product_id) cnt		 
+		 from Orders1596 group by customer_id, product_id
+	) t
+)m
+join Products1596 p
+on p.product_id=m.product_id 
+where m.rn=1
+order by customer_id, product_id
+
+>>Plan 0.041
+>> LIO Table 'Products1596'. Scan count 1, logical reads 6
+>>     Table 'Orders1596'.   Scan count 1, logical reads 1
+
+
+-- Var 1 the Plan expensive but LIO less -------------------
+ select  customer_id, product_id , product_name  from 
+ (
+	 select  customer_id, product_id, product_name, rank() over (partition by customer_id order by cnt desc ) rn
+	 from ( 
+		 select customer_id, p.product_id,  p.product_name, count (p.product_id) cnt		 
+		 from Orders1596 o
+		 join Products1596 p on p.product_id=o.product_id
+		 group by customer_id, p.product_id,  p.product_name
+	) t
+)m
+where m.rn=1
+ORDER BY customer_id, product_id
+
+>>Plan 0.059
+>> LIO Table 'Products1596'. Scan count 1, logical reads 1
+>>     Table 'Orders1596'.   Scan count 1, logical reads 1
+
+====================================================
+ create table Customers1596(
+ customer_id    int     ,
+ name           varchar(10) )
+
+ create table  Orders1596(
+ order_id       int     ,
+ order_date     date    ,
+ customer_id    int     ,
+ product_id     int     )
+
+ 
+ create table Products1596(
+ product_id     int     ,
+ product_name   varchar(15) ,
+ price          int     )
+
+
+ insert Customers1596 values
+( 1           , 'Alice' ),
+( 2           , 'Bob  ' ),
+( 3           , 'Tom  ' ),
+( 4           , 'Jerry' ),
+( 5           , 'John ' )
+
+insert  Orders1596 values 
+
+( 1        , '2020-07-31' , 1   , 1 ) ,
+( 2        , '2020-07-30' , 2   , 2 ) ,
+( 3        , '2020-08-29' , 3   , 3 ) ,
+( 4        , '2020-07-29' , 4   , 1 ) ,
+( 5        , '2020-06-10' , 1   , 2 ) ,
+( 6        , '2020-08-01' , 2   , 1 ) ,
+( 7        , '2020-08-01' , 3   , 3 ) ,
+( 8        , '2020-08-03' , 1   , 2 ) ,
+( 9        , '2020-08-07' , 2   , 3 ) ,
+( 10       , '2020-07-15' , 1   , 2 )
+
+ insert Products1596 values
+( 1 , 'keyboard  '   , 120)   ,
+( 2 , 'mouse     '   , 80 )   ,
+( 3 , 'screen    '   , 600)   ,
+( 4 , 'hard disk '   , 450) 

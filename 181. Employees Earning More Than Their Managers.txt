@@ -1,0 +1,30 @@
+181. Employees Earning More Than Their Managers
+
+
+  select Name from employee181 e1
+  where exists 
+  (
+  select * from employee181 e2 where e1.ManagerId=e2.id and e1.Salary>e2.Salary
+  )
+Estimated Subtree Cost 0.007
+>>Table 'employee181'. Scan count 2, logical reads 9
+
+--- V2 ---------
+
+  select Name from employee181 e1
+  where e1.ManagerId in
+  (
+  select id from employee181 e2 where e1.Salary>e2.Salary
+  )
+Estimated Subtree Cost 0.007
+>>Table 'employee181'. Scan count 2, logical reads 9
+
+--- V3 ---------
+
+  select e1.Name from employee181 e1
+  join employee181 e2 
+  on e1.ManagerId=e2.id and e1.Salary>e2.Salary
+
+Estimated Subtree Cost 0.21
+>>Table 'Worktable'. Scan count 8, logical reads 33
+>>Table 'employee181'. Scan count 2, logical reads 2

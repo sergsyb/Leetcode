@@ -1,0 +1,7 @@
+1149. Article Views II
+
+
+  select viewer_id 
+  from Views
+  group by viewer_id , view_date
+  having count (distinct article_id) >1

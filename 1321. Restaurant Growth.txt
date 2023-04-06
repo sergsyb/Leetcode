@@ -1,0 +1,16 @@
+1321. Restaurant Growth
+  
+with sum_per_day as (
+  select visited_on , sum(amount) amount
+			from   Customer1321
+			group by visited_on
+  ),
+  avg_per_week as (
+  select visited_on ,
+	  sum (amount) over (order by visited_on  rows between 6 preceding  and current row ) amount ,
+	  avg (1.0*amount) over (order by visited_on  rows between 6 preceding  and current row ) avg_amount_per_week
+	  from sum_per_day 
+  )
+
+  select visited_on , amount, ROUND(avg_amount_per_week, 2) as avg_amount_per_week
+  from avg_per_week  where visited_on>=dateadd(day, 6, (select min (visited_on) from Customer1321)) 

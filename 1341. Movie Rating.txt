@@ -1,0 +1,26 @@
+1341. Movie Rating
+
+with top_rated_user as (
+select top 1 name  from (
+	select name, count (*) cnt
+	from Movie_Rating1341 mr
+	join Users1341 u
+	on mr.user_id=u.user_id
+	group by name) t1
+order by cnt desc, name
+),
+
+top_avg_movie as (
+select top 1 title from (
+	select m.title, avg(1.0*rating) avg_rate from Movies1341 m
+	join Movie_Rating1341 mr
+	on m.movie_id=mr.movie_id
+	where created_at between  '2020-02-01' and EOMONTH('2020-02-01')
+	group by m.title) t2
+order by avg_rate desc, title
+)
+
+select name as result from top_rated_user 
+union
+select title from top_avg_movie
+

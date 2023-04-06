@@ -1,0 +1,81 @@
+1511. Customer Order Frequency
+
+--- Variant 1 -- the most optimal -----------------
+
+   select c.customer_id , name as  customer_name
+   --, SUM(case when LEFT(order_date, 7) = '2020-06' then quantity else 0 end * price)
+   --, SUM(case when LEFT(order_date, 7) = '2020-07' then quantity else 0 end * price)
+ from Customers1511 c
+ join Orders1511 o
+ on o.customer_id=c.customer_id
+ join Product1511 p
+ on p.product_id=o.product_id
+ group by c.customer_id , name 
+ having SUM(case when LEFT(order_date, 7) = '2020-06' then quantity else 0 end * price) >= 100
+    AND SUM(case when LEFT(order_date, 7) = '2020-07' then quantity else 0 end * price) >= 100
+
+>> Estimated Subtree Cost  0.022
+>> LIO 12
+
+----Variant 2 -------------
+with cte1 as (
+  select c.customer_id , name as  customer_name, MONTH(order_date) month, sum(price*o.quantity) suma
+ from Customers1511 c
+ join Orders1511 o
+ on o.customer_id=c.customer_id
+ join Product1511 p
+ on p.product_id=o.product_id
+ where order_date between '20200601' and '20200731'
+ group by c.customer_id , name , MONTH(order_date)
+ )
+
+ select c1.customer_id, c1.customer_name
+ from cte1 c1
+ join cte1 c2
+ on c1.customer_id=c2.customer_id and c1.month<c2.month
+ where c1.suma>=100 and c2.suma>=100
+
+>> Estimated Subtree Cost  0.097
+>> LIO 18
+
+
+
+---------------------------------------------------------------------------
+ create table Customers1511(
+ customer_id    int ,    
+ name           varchar(20) ,
+ country        varchar(10) )
+
+  create table Product1511
+ (
+ product_id     int,     
+ description    varchar (20),
+ price          int )
+
+  create table Orders1511 (
+ order_id       int,     
+ customer_id    int,     
+ product_id     int,     
+ order_date     date,    
+ quantity       int )
+
+ insert Customers1511 values 
+( 1            , 'Winston '  , 'USA  '   )    ,
+( 2            , 'Jonathan'  , 'Peru '   )    ,
+( 3            , 'Moustafa'  , 'Egypt'   )    
+                                     
+insert Product1511 values 
+( 10           , 'LC Phone   ' , 300   )      ,
+( 20           , 'LC T-Shirt ' , 10    )      ,
+( 30           , 'LC Book    ' , 45    )      ,
+( 40           , 'LC Keychain' , 2     )    
+ 
+insert Orders1511 values 
+( 1            , 1           , 10          , '2020-06-10'  , 1 )        ,
+( 2            , 1           , 20          , '2020-07-01'  , 1 )        ,
+( 3            , 1           , 30          , '2020-07-08'  , 2 )        ,
+( 4            , 2           , 10          , '2020-06-15'  , 2 )        ,
+( 5            , 2           , 40          , '2020-07-01'  , 10)        ,
+( 6            , 3           , 20          , '2020-06-24'  , 2 )        ,
+( 7            , 3           , 30          , '2020-06-25'  , 2 )        ,
+( 9            , 3           , 30          , '2020-05-08'  , 3 )        

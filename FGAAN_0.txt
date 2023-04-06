@@ -1,0 +1,114 @@
+declare @d datetime
+select @d='2020-05-25';
+
+--select * from warehouse
+/*begin tran
+update warehouse set OnHandQuantity=78, OnHandQuantityDelta=299 where id='SH0013'
+commit
+*/
+with cte1 as (select *, case when event_type='Inbound' then OnHandQuantityDelta else 0 end as Inbound,
+case when event_datetime >= dateadd (day, -90, @d) then  'a'
+	when event_datetime between dateadd (day, -180, @d) and dateadd (day, -91, @d)   then 'b'
+	when event_datetime between  dateadd (day, -270, @d)  and  dateadd (day, -181, @d) then 'c'
+	when event_datetime between  dateadd (day, -365, @d)  and dateadd (day, -270, @d) then 'd'end as Interval
+from warehouse
+)
+, cte2 as (
+select distinct Interval
+, FIRST_VALUE(OnHandQuantity) over (partition by Interval order by event_datetime desc ) rest
+, sum(Inbound) over (partition by Interval  ) prihod
+from cte1
+where Interval is not null
+)
+
+, cte3 as (
+select interval, least  (rest, prihod) Quantity_old , 
+case when rest<prihod then 1 else 0 end as  no_any_old_intervals
+from cte2
+)
+
+--select * from cte3
+select Quantity_old from cte3 where Interval='b' and lag(no_any_old_intervals) over (order by Interval)<>1
+select 
+
+isnull((select Quantity_old  from cte3 where Interval='a'),0)  as  '0-90 days old',
+isnull((select Quantity_old from cte3 where Interval='b' and lag(no_any_old_intervals) over (order by Interval)<>1  ),0) as  '91-180 days old',
+isnull((select Quantity_old from cte3 where Interval='c'),0) as  '181-270 days old',
+isnull((select Quantity_old from cte3 where Interval='d'),0) as  '271-365 days old'
+
+case when no_any_old_intervals =0 then 
+
+------------------
+
+WITH days as
+		(select top 1 event_datetime as last_day, onhandquantity 
+		 	  ,  dateadd (day, -90, event_datetime) as day90
+			  , dateadd (day, -180,event_datetime) as day180
+			  , dateadd (day, -270,event_datetime) as day270
+			  , dateadd (day, -365,event_datetime) as day365
+		 from warehouse order by event_datetime desc 
+		 )
+		 , inv_90_days as (
+	select coalesce(sum(WH.OnHandQuantityDelta), 0) as DaysOld_90  /* Get the total InBound inventories in the last 90 days */
+		 from warehouse WH cross join days
+		 where WH.event_datetime >= days.day90
+		 and event_type = 'InBound')
+		 , inv_90_days_final as(
+		 select case when DaysOld_90 > onhandquantity then onhandquantity  /* If InBound inventories is greater than curent total inventories then curent total inventories is the remaining inventories */
+					else DaysOld_90
+	   		   end as DaysOld_90
+		from inv_90_days x
+		cross join days)
+		,inv_180_days as(
+		select coalesce(sum(WH.OnHandQuantityDelta), 0) as DaysOld_180  /* Get the total InBound inventories between the last 90 and 180 days */
+		 from warehouse WH cross join days
+		 where WH.event_datetime between days.day180 and days.day90
+		 and event_type = 'InBound')
+		 ,inv_180_days_final as(          --120>78-78
+
+	
+		 select case when DaysOld_180 > (onhandquantity - DaysOld_90) then (onhandquantity - DaysOld_90)
+					else DaysOld_180
+	   		   end as DaysOld_180
+		from inv_180_days x
+		cross join days
+		cross join inv_90_days_final),
+
+	inv_270_days as
+		(select coalesce(sum(WH.OnHandQuantityDelta), 0) as DaysOld_270  /* Get the total InBound inventories between the last 180 and 270 days */
+		 from warehouse WH cross join days
+		 where WH.event_datetime between days.day270 and days.day180
+ 		 and event_type = 'InBound'),
+	inv_270_days_final as
+		(select case when DaysOld_270 > (onhandquantity - (DaysOld_90 + DaysOld_180)) then (onhandquantity - (DaysOld_90 + DaysOld_180)) 
+					else DaysOld_270
+	   		   end as DaysOld_270
+		from inv_270_days x
+		cross join days
+		cross join inv_90_days_final
+		cross join inv_180_days_final),
+
+	inv_365_days as
+		(select coalesce(sum(WH.OnHandQuantityDelta), 0) as DaysOld_365  /* Get the total InBound inventories between the last 270 and 365 days */
+		 from warehouse WH cross join days
+		 where WH.event_datetime between days.day365 and days.day270
+		 and event_type = 'InBound'),
+	inv_365_days_final as
+		(select case when DaysOld_365 > (onhandquantity - (DaysOld_90 + DaysOld_180 + DaysOld_270)) then (onhandquantity - (DaysOld_90 + DaysOld_180 + DaysOld_270)) 
+					else DaysOld_365
+	   		   end as DaysOld_365
+		from inv_365_days x
+		cross join days
+		cross join inv_90_days_final
+		cross join inv_180_days_final
+		cross join inv_270_days_final)
+
+select DaysOld_90 as "0-90 days old"
+	 , DaysOld_180 as "91-180 days old"
+	 , DaysOld_270 as "181-270 days old"
+	 , DaysOld_365 as "271-365 days old"
+from inv_90_days_final
+cross join inv_180_days_final
+cross join inv_270_days_final
+cross join inv_365_days_final
+cross join days;

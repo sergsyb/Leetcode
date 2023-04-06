@@ -1,0 +1,45 @@
+
+1098. Unpopular Books
+
+with books_sells_last_year as (
+	select book_id, sum(quantity) quantity from Orders1098
+	where dispatch_date between dateadd (YEAR, -1, '2019-06-23') and '2019-06-23'
+	group by book_id having sum(quantity) <10
+)
+select b.book_id, name from books1098 b
+left join books_sells_last_year bl
+on bl.book_id=b.book_id
+where available_from < dateadd (month, -1, '2019-06-23')
+
+
+
+----------------------------------
+
+select b.book_id, name from books1098 b
+where available_from < dateadd (month, -1, '2019-06-23')
+and book_id not in (
+	select book_id from Orders1098
+	where dispatch_date between dateadd (YEAR, -1, '2019-06-23') and '2019-06-23'
+	group by book_id having sum(quantity) >10
+)
+>>Estimated Subtree cost 0.25
+>>LIO - 9
+
+---------------- with count------------
+
+with selled_book as
+(
+	select b.book_id, sum( quantity ) tot_q
+	from Orders1098 o
+	join books1098 b
+	on o.book_id=b.book_id
+	where dispatch_date between dateadd(year, -1, '2019-06-23') and '2019-06-23'
+	and b.available_from < dateadd(month, -1, '2019-06-23')
+	group by b.book_id having count(*)  <10
+)
+
+select b.book_id, b.name , isnull(s.tot_q, 0) quantity
+from books1098 b
+left join selled_book s
+on s.book_id=b.book_id 
+where  b.available_from < dateadd(month, -1, '2019-06-23')

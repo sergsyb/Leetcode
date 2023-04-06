@@ -1,0 +1,39 @@
+1435. Create a Session Bar Chart
+
+select a.bin, isnull(u.cnt,0) cnt from 
+( select * from (
+values 
+	('0-5>' ),
+	('5-10>' ),
+	('10-15>'),
+	('15 or more')
+	)allbins  (bin)
+
+) a
+left join (
+	select bin, count (*) cnt from (
+	select session_id,
+	case when duration<=5*60 then '0-5>'
+		 when duration >5*60 and duration<=10*60 then '5-10>'
+		 when duration >10*60 and duration <=15*60 then '10-15>'
+		 else '15 or more' end bin
+		from Sessions
+	)t
+	group by bin
+) u
+on u.bin=a.bin
+
+
+--- Var2 -----------
+select bin, isnull(count (s.session_id),0) cnt from (
+	select * from (
+	values 
+		('0-5>', 0, 5*60 ),
+		('5-10>', 5*60,10*60 ),
+		('10-15>', 10*60, 15*60),
+		('15 or more' , 15*60, 1000000)
+		)allbins  (bin, mind, maxd) 
+	) a
+	left join Sessions s
+	on s.duration>mind and s.duration<=maxd
+group by bin

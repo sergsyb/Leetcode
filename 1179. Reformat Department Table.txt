@@ -1,0 +1,44 @@
+1179. Reformat Department Table
+
+----- Var1  using Pivot table -----------
+select  id, Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+from (
+	select id, month, revenue from Department1179 
+)t
+	pivot (
+	sum(revenue) 
+	for  month in (Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec)
+	)as Pivotab
+	
+----- Var2 group with case when
+
+select id, 
+min(case when month = 'Jan' then revenue end) as Jan,
+min(case when month = 'Feb' then revenue end) as Feb,
+min(case when month = 'Mar' then revenue end) as Mar,
+min(case when month = 'Apr' then revenue end) as Apr,
+min(case when month = 'May' then revenue end) as May,
+min(case when month = 'Jun' then revenue end) as Jun,
+min(case when month = 'Jul' then revenue end) as Jul,
+min(case when month = 'Aug' then revenue end) as Aug,
+min(case when month = 'Sep' then revenue end) as Sep,
+min(case when month = 'Oct' then revenue end) as Oct,
+min(case when month = 'Nov' then revenue end) as Nov,
+min(case when month = 'Dec' then revenue end) as Dec
+ from Department1179 
+ group by id
+
+
+-----------------
+
+create table  Department1179
+( id      int     ,
+ revenue int     ,
+ month   varchar(10) )
+
+insert Department1179 values
+( 1    , 8000    , 'Jan' )  ,
+( 2    , 9000    , 'Jan' )  ,
+( 3    , 10000   , 'Feb' )  ,
+( 1    , 7000    , 'Feb' )  ,
+( 1    , 6000    , 'Mar' )  

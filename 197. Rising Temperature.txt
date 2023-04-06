@@ -1,0 +1,37 @@
+197. Rising Temperature
+
+
+select id from (
+	 select id, temperature , lag(temperature) over (order by recordDate ) temp_prev_day
+	 from Weather197 
+	 )t 
+	 where temp_prev_day<temperature
+
+>>> Plan - 0.014
+>>> Table 'Weather197'. Scan count 1, logical reads 1
+
+
+
+ select w2.id
+ from Weather197 w1
+ join Weather197 w2
+ on w1.recordDate=dateadd(day, -1, w2.recordDate)
+where w2.temperature>w1.temperature
+
+>>> Plan - 0.02
+>>> Table 'Worktable'. Scan count 4, logical reads 17
+>>> Table 'Weather197'. Scan count 2, logical reads 2
+
+
+===========================================
+create table Weather197
+(
+id int,
+ recordDate date,
+ temperature int)
+
+ insert Weather197 values 
+ (1, '2015-01-01', 10 ),
+ (2, '2015-01-02', 25 ),
+ (3, '2015-01-03', 20 ),
+ (4, '2015-01-04', 30 )

@@ -1,0 +1,26 @@
+618. Students Report By Geography
+
+ with cte1 as (
+ select case when continent='America' then name end as America,
+		case when continent='Europe' then name end as Europe,
+		case when continent='Asia' then name end as Asia,
+		ROW_NUMBER() over (partition by continent  order by name) rn
+		from Student618
+)
+
+select min(America) as America, min(Europe) as Europe, min(Asia) as Asia from cte1
+group by rn
+
+
+--------------------
+create table Student618
+(
+name varchar (10),
+continent  varchar (10)
+)
+
+insert Student618 values 
+('Jane','America' ), 
+('Pascal','Europe' ),
+('Xi','Asia' ),
+('Jack','America' )

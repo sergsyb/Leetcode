@@ -1,0 +1,43 @@
+196. Delete Duplicate Emails
+
+begin tran
+delete p1
+	FROM Person196 p1
+	join Person196 p2
+	on  p1.Id > p2.Id
+	where p1.Email = p2.Email 
+
+select * from Person196
+rollback
+
+>>> Plan 0.029
+>>> Table 'Person196'. Scan count 2, logical reads 5
+>>> Table 'Worktable'. Scan count 1, logical reads 5
+
+-------------------------------------------------
+
+begin tran
+delete Person196 where id in (
+	select p2.id 
+	from Person196 p1 
+	join Person196 p2
+	on p1.id<p2.id and p1.email=p2.email
+)
+select * from Person196
+rollback
+
+>>> Plan 0.033
+>>> Table 'Person196'. Scan count 3, logical reads 8
+>>> Table 'Worktable'. Scan count 1, logical reads 5
+
+==========================
+create table Person196
+(
+id int,
+email varchar(20)
+)
+
+insert Person196 values
+( 1, 'john@example.com' ) ,
+( 2, 'bob@example.com' ) ,
+( 3, 'john@example.com' ) 

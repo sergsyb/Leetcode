@@ -1,0 +1,45 @@
+
+ select avg (persantage_removeed) as average_daily_percent  from (
+    select  action_date,  100.0*count( r.post_id)/count(1) as persantage_removeed from (
+	 select distinct  action_date,  r.post_id
+	 from Actions1132 a
+	 left join Removals1132 r
+	 on a.post_id=r.post_id
+	 where a.action='report' and a.extra ='spam'
+         )r
+    group by action_date
+ ) t
+
+
+------------------------------------------------
+create table  Actions1132 (
+ user_id        int     ,
+ post_id        int     ,
+ action_date    date    , 
+ action         varchar (10),
+ extra          varchar (10) )
+
+
+create table Removals1132 (
+
+ post_id        int     ,
+ remove_date    date    )
+
+ insert  Actions1132 values 
+ ( 1       , 1       , '2019-07-01'  , 'view  ' , null   ),
+( 1       , 1       , '2019-07-01'  , 'like  ' , null   ),
+( 1       , 1       , '2019-07-01'  , 'share ' , null   ),
+( 2       , 2       , '2019-07-04'  , 'view  ' , null   ),
+( 2       , 2       , '2019-07-04'  , 'report' , 'spam' ),
+( 3       , 4       , '2019-07-04'  , 'view  ' , null   ),
+( 3       , 4       , '2019-07-04'  , 'report' , 'spam' ),
+( 4       , 3       , '2019-07-02'  , 'view  ' , null   ),
+( 4       , 3       , '2019-07-02'  , 'report' , 'spam' ),
+( 5       , 2       , '2019-07-03'  , 'view  ' , null   ),
+( 5       , 2       , '2019-07-03'  , 'report' , 'racism'),
+( 5       , 5       ,  '2019-07-03'  , 'view  ' , null   ),
+( 5       , 5       ,  '2019-07-03'  , 'report' , 'racism') 
+
+insert Removals1132 values
+( 2,    '2019-07-20'), 
+( 3,    '2019-07-18') 

@@ -1,0 +1,44 @@
+2362 - Generate the Invoice
+
+with max_cost_invoices as (
+select top 1  invoice_id from 
+		(
+		select invoice_id, sum(quantity*price) inv_cost
+		from Products2362 pr
+		join Purchases2362 pu 
+		on pr.product_id=pu.product_id
+		group by invoice_id
+		)t order by inv_cost desc, invoice_id
+)
+
+select pr.product_id, quantity, price*quantity as price
+from Purchases2362 pu
+join Products2362 pr
+on pr.product_id=pu.product_id
+where invoice_id =  (select invoice_id from max_cost_invoices)
+
+
+-----------------------
+create table Products2362
+(
+product_id int,
+price int
+)
+
+create table Purchases2362
+(
+invoice_id  int,
+product_id int,
+quantity    int
+);
+
+insert Products2362 values 
+(1, 100),
+(2, 200)
+
+insert Purchases2362 values
+( 1 , 1, 2),
+( 3 , 2, 1),
+( 2 , 2, 3),
+( 2 , 1, 4),
+( 4 , 1, 10)

@@ -1,0 +1,71 @@
+1398. Customers Who Bought Products A and B but Not C
+
+
+-Var1 with sum(case) ------------
+select a.customer_name
+from customers1398 a , Orders1398 b
+where a.customer_id  = b.customer_id
+group by a.customer_name
+having 
+sum(case when b.product_name='A' then 1 end)>0 and
+sum(case when b.product_name='B' then 1 end)>0 and
+sum(case when b.product_name ='C' then 1 else 0 end)=0
+
+>> Estimared subtree cost - 0.18
+>> Table 'Orders1398'. Scan count 4, logical reads 8
+>> Table 'Customers1398'. Scan count 1, logical reads 1
+
+
+------ Var2 with in/not in 
+
+ select customer_name from Customers1398 c
+  join
+  ( select customer_id 
+	from Orders1398  where product_name='A'
+	and customer_id  
+	in ( select customer_id 
+		from Orders1398 where product_name='B') 
+    and customer_id 
+	not in ( select customer_id 
+			from Orders1398 where product_name='C') 
+  ) o
+  on o.customer_id=c.customer_id
+
+>> Estimared subtree cost - 0.13
+>> Table 'Orders1398'. Scan count 3, logical reads 21
+>> Table 'Customers1398'. Scan count 1, logical reads 1
+
+----- Var3 with  exist / not exists  
+
+  select customer_name from Customers1398 c
+  join
+  ( select customer_id 
+	from Orders1398 o  where product_name='A'
+	and exists
+	(select * from Orders1398  where o.customer_id=customer_id and product_name='B'  )
+	and not exists
+	(select * from Orders1398  where o.customer_id= customer_id and product_name='C'  )
+  ) o2
+  on o2.customer_id=c.customer_id
+
+>> Estimared subtree cost - 0.13
+>> Table 'Orders1398'. Scan count 3, logical reads 21
+>> Table 'Customers1398'. Scan count 1, logical reads 1
+
+----- Var4 -- group with count and except
+
+select customer_name from Customers1398 c join 
+(
+	select customer_id from (  
+		select distinct customer_id, product_name from
+		Orders1398 where product_name='A' or product_name='B') t
+	group by customer_id  having count(*) =2
+	except
+	select customer_id from Orders1398 where product_name='C'
+)a
+on a.customer_id=c.customer_id
+
+>> Estimared subtree cost - 0.38
+>> Table 'Orders1398'. Scan count 3, logical reads 6
+>> Table 'Customers1398'. Scan count 1, logical reads 1
+

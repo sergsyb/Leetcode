@@ -1,0 +1,26 @@
+with not_uniq_salary as (
+	select salary, 
+	rank () over (order by salary asc ) team_id
+	from   Employees1875
+	group by salary having count(1) >1 
+	)
+
+select * 
+from Employees1875 e
+join not_uniq_salary n
+on n.salary=e.salary
+
+----------------------------------------------
+create table Employees1875
+(employee_id int,
+name  varchar (20),
+salary       int
+);
+
+
+insert Employees1875 values
+( 2  , 'Meir    ', 3000)   ,
+( 3  , 'Michael ', 3000)   ,
+( 7  , 'Addilyn ', 7400)   ,
+( 8  , 'Juan    ', 6100)   ,
+( 9  , 'Kannon  ', 7400) 

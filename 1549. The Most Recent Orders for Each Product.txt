@@ -1,0 +1,72 @@
+1549. The Most Recent Orders for Each Product
+
+select product_name,  product_id, order_id, order_date from (
+	select product_name,  p.product_id, order_id, order_date, rank () over (partition by o.product_id order by order_date desc) rn
+	from Orders1549 o
+	join Products1549 p
+	on p.product_id=o.product_id) t
+where rn=1
+order by product_name,  product_id, order_id
+;
+--------------------
+with recent_products as (
+	select product_id,  max(order_date) m_order_date
+	from Orders1549
+	group by product_id)
+
+select product_name,  p.product_id, order_id, order_date
+from Orders1549 o
+join Products1549 p
+on p.product_id=o.product_id
+join recent_products c
+on c.product_id=o.product_id and c.m_order_date=o.order_date
+
+
+
+============================================================
+create table Customers1549(
+customer_id int,
+name varchar(10))
+
+create table Orders1549
+(
+ order_id       int,
+ order_date    date ,
+ customer_id   int ,
+ product_id    int 
+)
+
+create table Products1549
+(
+ product_id    int ,
+ product_name varchar(15),
+ price int
+)
+
+ insert Customers1549 values
+( 1           , 'Winston  ') ,
+( 2           , 'Jonathan ') ,
+( 3           , 'Annabelle') ,
+( 4           , 'Marwan   ') ,
+( 5           , 'Khaled   ') 
+
+insert  Orders1549 values
+( 1        , '2020-07-31' , 1           , 1 )  ,
+( 2        , '2020-07-30' , 2           , 2 )  ,
+( 3        , '2020-08-29' , 3           , 3 )  ,
+( 4        , '2020-07-29' , 4           , 1 )  ,
+( 5        , '2020-06-10' , 1           , 2 )  ,
+( 6        , '2020-08-01' , 2           , 1 )  ,
+( 7        , '2020-08-01' , 3           , 1 )  ,
+( 8        , '2020-08-03' , 1           , 2 )  ,
+( 9        , '2020-08-07' , 2           , 3 )  ,
+( 10       , '2020-07-15' , 1           , 2 ) 
+
+insert  Products1549 values
+( 1          , 'keyboard  '   , 120 )  ,
+( 2          , 'mouse     '   , 80  )  ,
+( 3          , 'screen    '   , 600 )  ,
+( 4          , 'hard disk '   , 450 )  
+                                 
+
+

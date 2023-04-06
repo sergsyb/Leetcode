@@ -1,0 +1,4 @@
+select gender, day,  sum(score_points) over (partition by  gender  order by day)
+  as total_score
+  from Scores
+  order by gender, day 

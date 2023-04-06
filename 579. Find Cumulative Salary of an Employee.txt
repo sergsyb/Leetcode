@@ -1,0 +1,57 @@
+with cte1 as
+(
+select *, Month - row_number () over (partition by id order by month) as for_group from Employee579 e1
+where Month <  (select max(Month) from Employee579  where e1.Id=Id  ) -- not last months
+) 
+
+select id,  month, sum(Salary)   over (partition by id, for_group order by Month
+ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) as [3_Salary] -- use for_group to calculate serial months
+from cte1
+
+>> Estimated Subtree cost  0.264
+>> LIO  -39
+-------------------
+
+with cte1 as (
+select * ,  ROW_NUMBER() over (partition by id order by Month ) rn,
+lead (Month) over (partition by id order by Month) next_month
+from Employee579
+),
+ cte2 as
+(select *, rn-Month for_grup
+from cte1 where  next_month is not NULL 
+
+)
+
+select id,  month, sum(Salary)   over (partition by id, for_grup order by Month
+ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) as [3_Salary]
+from cte2
+order by 1,2
+
+>> Estimated Subtree cost  0.375
+>> LIO  -1
+---------
+SELECT
+    E1.id,
+    E1.month,
+    (isnull(E1.salary, 0) + isnull(E2.salary, 0) + isnull(E3.salary, 0)) AS Salary
+FROM
+    (SELECT
+        id, MAX(month) AS month
+    FROM
+        Employee579
+    GROUP BY id
+    HAVING COUNT(*) > 1) AS maxmonth
+        LEFT JOIN
+    Employee579 E1 ON (maxmonth.id = E1.id
+        AND maxmonth.month > E1.month)
+        LEFT JOIN
+    Employee579 E2 ON (E2.id = E1.id
+        AND E2.month = E1.month - 1)
+        LEFT JOIN
+    Employee579 E3 ON (E3.id = E1.id
+        AND E3.month = E1.month - 2)
+ORDER BY id ASC , month DESC
+
+>> Estimated Subtree cost  0.378
+>> LIO  -24

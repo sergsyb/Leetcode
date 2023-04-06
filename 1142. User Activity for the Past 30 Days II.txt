@@ -1,0 +1,26 @@
+1142. User Activity for the Past 30 Days II
+
+
+  select avg (1.0*cnt) from (
+	  select user_id, count(distinct  session_id  ) cnt
+	  from Activity1142 a
+	  where a.activity_date between dateadd(day, -30, '2019-07-27') and '2019-07-27'
+	  group by  user_id
+  )t
+
+---------------------------------------------------------------------
+  insert Activity1142 values
+  ( 1       , 1          , '2019-07-20'    , 'open_session' ) ,
+( 1       , 1          , '2019-07-20'    , 'scroll_down ' ) ,
+( 1       , 1          , '2019-07-20'    , 'end_session ' ) ,
+( 2       , 4          , '2019-07-20'    , 'open_session' ) ,
+( 2       , 4          , '2019-07-21'    , 'send_message' ) ,
+( 2       , 4          , '2019-07-21'    , 'end_session ' ) ,
+( 3       , 2          , '2019-07-21'    , 'open_session' ) ,
+( 3       , 2          , '2019-07-21'    , 'send_message' ) ,
+( 3       , 2          , '2019-07-21'    , 'end_session ' ) ,
+( 3       , 5          , '2019-07-21'    , 'open_session' ) ,
+( 3       , 5          , '2019-07-21'    , 'scroll_down ' ) ,
+( 3       , 5          , '2019-07-21'    , 'end_session ' ) ,
+( 4       , 3          , '2019-06-25'    , 'open_session' ) ,
+( 4       , 3          , '2019-06-25'    , 'end_session ' )    

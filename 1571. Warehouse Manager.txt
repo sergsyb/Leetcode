@@ -1,0 +1,23 @@
+1571. Warehouse Manager
+
+select name as warehouse_name,  sum(Width*Length*Height*units) as volume     
+from Products1571 p
+right join Warehouse1571 w
+on w.product_id=p.product_id
+group by name
+
+================================================
+create table Warehouse1571
+(
+ name        varchar(10) ,
+ product_id  int     ,
+ units       int     )
+
+
+create table  Products1571
+(
+ product_id    int     ,
+ product_name  varchar(15) ,
+ Width         int     ,
+ Length        int     ,
+ Height        int     )

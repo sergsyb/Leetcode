@@ -4,12 +4,12 @@ with cte1 as (  --------- Найти всех пользователей кто 
 	join Listens1917 l2 on l1.day=l2.day and l1.song_id=l2.song_id and l1.user_id<>l2.user_id
 )
 ,cte2 as (      ----------- Одна пара пользователей слушала как минимум 3 песни в один день.
-	select user1_id, user2_id, day from cte1 
-	group by user1_id, user2_id, day
+	select user1_id, user2_id from cte1 
+	group by user1_id, user2_id
 	having count (song_id) >=3
 )
 
-/*            --- Можно через Left join находя тех, кто не входит в уже существующих друзей. (f.user1_id is null and f.user2_id is null)
+           --- Можно через Left join находя тех, кто не входит в уже существующих друзей. (f.user1_id is null and f.user2_id is null)
 						--- Table 'Friendship1917'. Scan count 7, logical reads 12
 						--- Table 'Listens1917'. Scan count 2, logical reads 2
 
@@ -20,7 +20,7 @@ select c.user1_id, c.user2_id from cte2 c left join
 on f.user1_id=c.user1_id and f.user2_id=c.user2_id
 where f.user1_id is null and f.user2_id is null
 
-*/
+
             --- Или через множества Except  ----- НО LIO больше Table 'Friendship1917'. Scan count 6, logical reads 11
 	    ---							Table 'Listens1917'.  Scan count 2, logical reads 17
 

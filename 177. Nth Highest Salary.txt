@@ -1,0 +1,9 @@
+declare @N int
+select @N=10 ------  Set here
+
+select @N=@N-1 
+
+select ISNULL((select salary 
+from Employee176 
+order by salary
+offset (@N) row FETCH next 1 row only), NULL) as  NthHighestSalary

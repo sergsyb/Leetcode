@@ -1,0 +1,6 @@
+1350. Students With Invalid Departments
+
+  select s.id, s.name from Students1350 s 
+  left join Departments1350 d
+  on d.id=s.department_id
+  where d.id is null

@@ -1,0 +1,12 @@
+511. Game Play Analysis I
+
+  select player_id, min(event_date)  as first_login 
+  from Activity511
+  group by player_id
+   
+
+  select a1.player_id, a1.event_date
+  from Activity511 a1
+  left join Activity511 a2
+  on a1.player_id=a2.player_id and a1.event_date>a2.event_date
+  where a2.device_id is null

@@ -1,0 +1,17 @@
+613. Shortest Distance in a Line
+
+	select min(abs (p1.x - p2.x)) length
+	from Point p1
+	join Point p2
+	on p1.x<>p2.x
+
+=======================
+create table Point
+(
+x int
+)
+
+insert Point values 
+(-1),
+(0),
+(2)

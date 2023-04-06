@@ -1,0 +1,58 @@
+1112. Highest Grade For Each Student
+
+
+-- V1 ---
+select student_id, course_id, grade from (
+	select student_id, course_id, grade, 
+	RANK() over (partition by student_id order by grade desc,course_id ) rn
+	from Enrollments 
+) t where rn=1
+		
+>>> Estimated sutree cost - 0.014
+>>> LIO - 1
+
+--- V2 with CROSS APPLY ----
+select e1.student_id,  t.course_id, maxgrad from (
+	select student_id,  max(grade) maxgrad from Enrollments 
+	group by student_id
+) e1
+cross apply 
+(
+	select top 1 student_id, course_id from Enrollments e2 
+	where e1.student_id=e2.student_id and e1.maxgrad=e2.grade
+	order by course_id
+)t
+
+>>> Estimated sutree cost - 0.052
+>>> LIO - 4
+
+
+---V3 ---
+select * from (
+	select e1.student_id,  e2.course_id, maxgrad, 
+	ROW_NUMBER() over (partition by e1.student_id order by e2.course_id ) rn
+	from (
+		select student_id,  max(grade) maxgrad from Enrollments 
+		group by student_id
+	) e1 join Enrollments e2
+	on e1.student_id=e2.student_id and e1.maxgrad=e2.grade)u
+where rn=1
+
+>>> Estimated sutree cost - 0.026
+>>> LIO - 1
+
+--- V4---- With exists
+
+SELECT student_id, MIN(course_id) AS course_id, grade
+FROM Enrollments e1
+WHERE  exists 
+		(select student_id, maxgrade from (
+			SELECT student_id, MAX(grade) as maxgrade
+			FROM Enrollments
+			GROUP BY student_id) t where e1.student_id=student_id and e1.grade=maxgrade
+		)  
+GROUP BY student_id, grade
+ORDER BY student_id
+
+>>> Estimated sutree cost - 0.018
+>>> LIO - 8

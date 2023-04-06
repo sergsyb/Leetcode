@@ -1,0 +1,67 @@
+1336. Number of Transactions per Visit 
+
+  with number_trans_per_user_per_day as (
+   		select v.visit_date, v.user_id, isnull(count (t.user_id), 0) as cnt_tran_per_user
+		from Visits1336 v
+		left join (
+		select distinct * from Transactions1336) t
+		on t.user_id=v.user_id and v.visit_date=t.transaction_date
+		group by v.visit_date,  v.user_id
+	), 
+	get_max_cnt_tran as (
+		select max (cnt_tran_per_user) cnt_tran_max from number_trans_per_user_per_day
+	),
+	all_cnt_tran as (
+		select 0 as cnt_tran
+		union all
+		select cnt_tran+1 from all_cnt_tran 
+		where cnt_tran<(select cnt_tran_max from get_max_cnt_tran)
+	)
+
+	select cnt_tran as  transactions_count, isnull(visits_count, 0) visits_count from all_cnt_tran a
+	left join (
+		select cnt_tran_per_user, count(user_id) as visits_count
+		from number_trans_per_user_per_day
+		group by cnt_tran_per_user) y
+	on y.cnt_tran_per_user=a.cnt_tran
+
+
+Estimated subtree cost is 0.019
+
+>>> Table 'Transactions1336'. Scan count 8, logical reads 80
+>>> Table 'Visits1336'. Scan count 8, logical reads 16
+>>> Table 'Worktable'. Scan count 2, logical reads 25
+
+
+-------------- Var2 don't use requrse table 
+
+   with number_trans_per_user_per_day as (
+   		select v.visit_date, v.user_id, isnull(count (t.user_id), 0) as cnt_tran_per_user
+		from Visits1336 v
+		left join (
+		select distinct * from Transactions1336) t
+		on t.user_id=v.user_id and v.visit_date=t.transaction_date
+		group by v.visit_date,  v.user_id
+	), 
+	
+	all_cnt_tran as (
+	select ROW_NUMBER() over (order by transaction_date ) cnt_tran
+    from Transactions1336 t
+	union all
+	select 0
+	)
+	select cnt_tran as  transactions_count, isnull(visits_count, 0) visits_count from all_cnt_tran a
+	left join (
+		select cnt_tran_per_user, count(user_id) as visits_count
+		from number_trans_per_user_per_day
+		group by cnt_tran_per_user) y
+	on y.cnt_tran_per_user=a.cnt_tran
+	where cnt_tran<=(select max (cnt_tran_per_user) cnt_tran_max from number_trans_per_user_per_day)
+	order by 1
+
+Estimated subtree cost is 0.06
+
+>>> 'Worktable'. Scan count 1, logical reads 95
+>>> 'Transactions1336'. Scan count 3, logical reads 4
+>>> 'Visits1336'. Scan count 5, logical reads 10
+

@@ -1,0 +1,11 @@
+1126. Active Businesses
+
+select business_id  from
+  Events e join (
+	  select event_type, avg(occurences) avg_occurences
+	  from [Events]
+	  group by event_type
+	  ) g
+	on g.event_type=e.event_type
+where occurences>avg_occurences
+group by business_id having count(*)>1

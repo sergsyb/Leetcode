@@ -1,0 +1,48 @@
+1194. Tournament Winners
+
+--- Var1 with row_number to find max
+  with matches as
+  (
+	  select  match_id , first_player as player_id, first_score as score
+	  from Matches1194 
+	  union all
+	  select  match_id , second_player, second_score
+	  from Matches1194 
+  )
+  , total_score_for_players as
+  (
+	  select m.player_id, p.group_id,  sum(score)  tot_score
+	  from matches m join Players1194 p
+	  on m.player_id=p.player_id
+	  group by m.player_id, group_id
+  )
+
+  select group_id , player_id  from(
+	  select *, ROW_NUMBER() over (partition by  group_id order by tot_score desc,player_id ) rn
+	  from total_score_for_players
+	  ) t
+  where rn=1
+
+--- Var2 with Cross Apply and top 1
+
+  (
+	  select  match_id , first_player as player_id, first_score as score
+	  from Matches1194 
+	  union all
+	  select  match_id , second_player, second_score
+	  from Matches1194 
+  )
+  , total_score_for_players as (
+	  select m.player_id, p.group_id,  sum(score)  tot_score
+	  from matches m join Players1194 p
+	  on m.player_id=p.player_id
+	  group by m.player_id, group_id
+  )
+  select t1.group_id, t2.player_id 
+  from (select distinct group_id from total_score_for_players)  t1
+  cross  apply 
+  (
+  select top 1 group_id , player_id from total_score_for_players 
+  where t1.group_id=group_id 
+  order by  tot_score desc,player_id  
+  )t2

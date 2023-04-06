@@ -1,0 +1,12 @@
+1270. All People Report to the Given Manager
+
+with revtab as(
+select employee_id  
+from Employees1270 
+where manager_id=1 and  employee_id<>1
+union all
+select e.employee_id from  Employees1270 e
+join revtab r on  e.manager_id=r.employee_id
+)
+
+select * from revtab

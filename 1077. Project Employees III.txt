@@ -1,0 +1,13 @@
+1077. Project Employees III
+
+select p.* from Project1077 p
+join Employee1077 e
+on p.employee_id=e.employee_id
+join (
+	select project_id , max(experience_years) max_years
+	from Project1077 p
+	join Employee1077 e
+	on p.employee_id=e.employee_id
+	group by project_id
+) my
+on p.project_id=my.project_id and my.max_years=e.experience_years

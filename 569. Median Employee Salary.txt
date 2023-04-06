@@ -1,0 +1,11 @@
+569. Median Employee Salary
+
+  with cte1 as(
+	  select e.Company, e.Salary, ROW_NUMBER() over (partition by Company order by salary ) rn,
+	  count(*)  over (partition by Company) cnt
+	  from Employee569 e
+  )
+
+  select Company, Salary from cte1 
+  where cnt % 2 <>0 and cnt/2+1=rn  --- for odd cnt
+  or (cnt%2 = 0 and (cnt/2=rn or cnt/2+1=rn))   -- for even  cnt

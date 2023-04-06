@@ -1,0 +1,22 @@
+1543. Fix Product Name Format
+
+select lower(trim(product_name)) product_name, cast (sale_date as varchar(7)) as sale_date , count (*) total  
+from sales1543
+group by lower(trim(product_name)), cast (sale_date as varchar(7))
+order by 1,2
+
+=============================================
+create table Sales1543
+(
+sale_id int,
+product_name varchar (15),
+sale_date date
+)
+
+insert Sales1543 values 
+( 1       , 'LCPHONE   '   , '2000-01-16') ,
+( 2       , 'LCPhone   '   , '2000-01-17') ,
+( 3       , 'LcPhOnE   '   , '2000-02-18') ,
+( 4       , 'LCKeyCHAiN'   , '2000-02-19') ,
+( 5       , 'LCKeyChain'   , '2000-02-28') ,
+( 6       , 'Matryoshka'   , '2000-03-31') 

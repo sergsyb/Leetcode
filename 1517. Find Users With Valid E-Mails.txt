@@ -1,0 +1,44 @@
+1517. Find Users With Valid E-Mails
+
+==== In MS SQL Server we need to check every symbol in a prefix to match the pattern [A-Z0-9-._] =======================
+
+CREATE FUNCTION check_mail (@email varchar(30))
+RETURNS int
+as
+begin
+	declare @c int, @email_prefix varchar (20)
+	select @email_prefix = left(@email, CHARINDEX( '@', @email)-1) 
+	set @c=1
+	while @c<=len (@email_prefix)
+	begin
+		if SUBSTRING(@email_prefix, @c, 1) not like '[A-Z0-9-._]' 
+		return 1
+		set @c=@c+1
+	end
+	return 0
+end
+go
+
+
+select * 
+from Users1517
+where mail like '[A-Z]%@leetcode.com'   -- Starts from leter and ends by leetcode.com
+and dbo.check_mail (mail)=0
+
+
+---------------------------------------------------------------------------------
+
+ create table Users1517(
+ user_id        int  ,
+ name         varchar(10) ,
+ mail         varchar(25) )
+
+
+ insert Users1517 values 
+ ( 1       , 'Winston  ' , 'winston@leetcode.com   ' ),
+( 2       , 'Jonathan ' , 'jonathanisgreat        ' ),
+( 3       , 'Annabelle' , 'bella-@leetcode.com    ' ),
+( 4       , 'Sally    ' , 'sally.come@leetcode.com' ),
+( 5       , 'Marwan   ' , 'quarz#2020@leetcode.com' ),
+( 6       , 'David    ' , 'david69@gmail.com      ' ),
+( 7       , 'Shapiro  ' , '.shapo@leetcode.com    ' )

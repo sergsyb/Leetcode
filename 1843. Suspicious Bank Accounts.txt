@@ -1,0 +1,54 @@
+1843. Suspicious Bank Accounts
+
+-- V1- 2 cte
+  with cte1 as (
+	  select account_id, convert (varchar(7), day, 102 ) tr_month, sum (amount) month_income
+	  from Transactions1843
+	  where type='Creditor'
+	  group by account_id, convert (varchar(7), day, 102)
+  )
+  , cte2 as (
+  select c.account_id, c.tr_month
+  from cte1 c
+  join Accounts1843 a
+  on c.account_id=a.account_id and c.month_income>a.max_income
+  )
+
+  select c1.account_id 
+  from cte2 c1
+  join cte2  c2
+  on c1.account_id=c2.account_id 
+  and convert(datetime, c1.tr_month+'.01') = dateadd (MONTH, -1,convert(datetime, c2.tr_month+'.01') )
+
+-- V2- 1 cte and subquery
+  
+    with cte1 as (
+	  select account_id, convert (varchar(7), day, 102 ) tr_month, sum (amount) month_income
+	  from Transactions1843 t
+	  where type='Creditor'
+	  group by account_id, convert (varchar(7), day, 102)
+	  having sum (amount) > (select max_income from Accounts1843 a where a.account_id=t.account_id)
+  )
+  
+  select c1.account_id 
+  from cte1 c1
+  join cte1  c2
+  on c1.account_id=c2.account_id 
+  and convert(datetime, c1.tr_month+'.01') = dateadd (MONTH, -1,convert(datetime, c2.tr_month+'.01') )
+
+
+ --V3 using new function DATETRUNC
+
+   with cte1 as (
+	  select account_id, DATETRUNC(month, day) tr_month, sum (amount) month_income
+	  from Transactions1843 t
+	  where type='Creditor'
+	  group by account_id, DATETRUNC(month, day )
+	  having sum (amount) > (select max_income from Accounts1843 a where a.account_id=t.account_id)
+  )
+  
+  select c1.account_id 
+  from cte1 c1
+  join cte1  c2
+  on c1.account_id=c2.account_id 
+  and c1.tr_month=DATEADD(month, -1, c2.tr_month)

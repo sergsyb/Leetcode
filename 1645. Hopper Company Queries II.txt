@@ -1,0 +1,71 @@
+1645. Hopper Company Queries II
+
+with all_months as (
+	select 1 as mon
+	union all
+	select mon+1 from  all_months where mon<12
+)
+, drivers20 as(
+select	mon, count(*) as drv_cnt		
+from all_months a
+left join (
+	select driver_id, '20200101' as join_date from Drivers where join_date<'20200101'
+	union all
+	select driver_id, join_date  from Drivers
+	where year(join_date)=2020)d
+on a.mon>= MONTH(d.join_date)
+group by mon
+)
+, arides as(
+	select  MONTH( r.requested_at) mon_arides, 
+	count(r.ride_id) cnt_rides
+	from Rides r
+	join AcceptedRides ar
+	on r.ride_id=ar.ride_id
+	where year(requested_at )=2020
+	group by MONTH( r.requested_at)
+)
+
+select d.mon, isnull(round(100.0*ar.cnt_rides/d.drv_cnt, 2),0) as percentage
+from drivers20 d
+left join  arides ar
+on d.mon=ar.mon_arides
+
+-------------------
+Estimated subtree cost - 0.048
+LIO -143
+
+----Var 2 -----------------------
+with rectab as (
+	select 1 as month20 
+	union all
+	select month20+1 from rectab where month20<12
+)
+, accept_ride_20 as (
+	select  month(requested_at) mon20, count( a.driver_id) acnt from Rides r
+	join AcceptedRides a on a.ride_id=r.ride_id
+	where year (requested_at ) = 2020
+	group by month(requested_at)
+)
+, drivers20_0 as (
+		select	Month(case when d.join_date< '2020-01-01' then '2020-01-01' else d.join_date end) as month20 ,d.driver_id
+		 from Drivers d 
+		 where join_date<='2020-12-31'
+)
+
+, drivers20 as (
+select month20, sum (cnt) over (order by month20) as cnt_dirvers_20  from (
+		select r.month20, count(d.driver_id) cnt
+		from drivers20_0 d right join rectab r on r.month20=d.month20
+		group by r.month20
+	) t
+)
+
+select d.month20, isnull(round(100.0*a.acnt/d.cnt_dirvers_20, 2),0) as percent20
+from drivers20 d
+left join accept_ride_20 a
+on d.month20=a.mon20
+order by 1
+
+Estimated subtree cost - 0.044
+LIO -208

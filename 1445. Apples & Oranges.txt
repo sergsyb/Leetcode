@@ -1,0 +1,20 @@
+1445. Apples & Oranges
+
+-----Var1 - with join--------- 
+ select s1.sale_date, s1.sold_num-s2.sold_num as diff
+  from sales1445 s1
+  join sales1445 s2
+  on s1.sale_date=s2.sale_date and
+  s1.fruit<>s2.fruit
+  where s1.fruit='apples'
+
+>>> Estimated Subtree cost - 0.02
+>> LIO - 2
+
+-----Var2 - more optimal without join --------------
+  select sale_date ,sum ( case when fruit='oranges' then -sold_num else sold_num end) as diff 
+  from sales1445 
+  group by sale_date 
+
+>>> Estimated Subtree cost - 0.014
+>>>  LIO -1

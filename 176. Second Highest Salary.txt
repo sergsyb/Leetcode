@@ -1,0 +1,15 @@
+select * from Employee176
+order by Salary
+offset 1 rows fetch next 1 rows only
+
+--------
+create table Employee176
+(
+Id int,
+Salary int
+)
+
+insert Employee176 values 
+(1,100),
+(2, 200),
+(3, 300)

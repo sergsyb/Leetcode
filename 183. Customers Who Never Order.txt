@@ -1,0 +1,4 @@
+select Name from Customers183 c
+left join Orders183 o
+on o.CustomerId=c.id
+where o.CustomerId is null

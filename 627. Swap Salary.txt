@@ -1,0 +1,17 @@
+627. Swap Salary
+
+
+update Salary627 set sex=case when sex='m' then 'f' else 'm' end
+
+
+create table Salary627
+( id        int          ,
+ name      varchar(10)  ,
+ sex       varchar      ,
+ salary    int )
+
+ insert Salary627 values
+ ( 1  , 'A'    , 'm'   , 2500 )  ,
+( 2  , 'B'    , 'f'   , 1500 )  ,
+( 3  , 'C'    , 'm'   , 5500 )  ,
+( 4  , 'D'    , 'f'   , 500  )    

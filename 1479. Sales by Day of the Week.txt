@@ -1,0 +1,148 @@
+1479. Sales by Day of the Week
+
+---Optimal -------
+select b.item_category as 'CATEGORY', sum(case when datepart (dw, a.order_date) = 0 then a.quantity else 0 end) as 'MONDAY',
+sum(case when datepart (dw,a.order_date) = 1 then a.quantity else 0 end) as 'TUESDAY',
+sum(case when datepart (dw,a.order_date) = 2 then a.quantity else 0 end) as 'WEDNESDAY',
+sum(case when datepart (dw,a.order_date) = 3 then a.quantity else 0 end) as 'THURSDAY',
+sum(case when datepart (dw,a.order_date) = 4 then a.quantity else 0 end) as 'FRIDAY',
+sum(case when datepart (dw,a.order_date) = 5 then a.quantity else 0 end) as 'SATURDAY',
+sum(case when datepart (dw,a.order_date) = 6 then a.quantity else 0 end) as 'SUNDAY'
+from orders1479 a right join items1479 b on a.item_id = b.item_id
+group by b.item_category
+order by b.item_category
+
+>>> PLAN 0.017
+>>> LIO 7
+
+-------------------
+
+with cte1 as (
+	select item_category , DATEname(dw,order_date) Weekday, sum(quantity) tot_quant
+	from Orders1479 o
+	join Items1479 i 
+	on i.item_id=o.item_id
+	group by item_category , DATEname(dw,order_date)
+)
+, cte2 as (
+select  item_category as Category, 
+case	when Weekday='Monday' then tot_quant else 0 end as Monday, 
+case	when Weekday='Tuesday' then tot_quant else 0 end as Tuesday,
+case	when Weekday='Wednesday' then tot_quant else 0 end as Wednesday,
+case	when Weekday='Thursday' then tot_quant else 0 end as Thursday,
+case	when Weekday='Friday' then tot_quant else 0 end as Friday,
+case	when Weekday='Saturday' then tot_quant else 0 end as Saturday,
+case	when Weekday='Sunday' then tot_quant else 0 end as Sunday
+from cte1
+)
+
+select distinct i.item_category as category, isnull(Monday, 0) Monday, 
+isnull(Tuesday,0) as Tuesday,
+isnull(Wednesday, 0) Wednesday,
+isnull(Thursday, 0) Thursday, 
+isnull(Friday, 0) Friday,
+isnull(Saturday, 0) Saturday,
+isnull(Sunday, 0) Sunday
+from  Items1479 i left join (
+	select category, sum(Monday) as Monday, 
+	sum(Tuesday) as Tuesday,  
+	sum(Wednesday) as Wednesday, 
+	sum(Thursday) as Thursday,  
+	sum(Friday) as Friday ,
+	sum(Saturday) as Saturday , 
+	sum(Sunday) as Sunday
+	from cte2
+	group by category
+) t
+on i.item_category=t.Category
+
+>>> Plan - 0.061 
+>>> LIO - 20
+
+
+
+--- Var2 with Pivot 
+
+with cte1 as (	
+	select item_category as Category , DATEname(dw,order_date) Weekday, quantity 
+	from Orders1479 o
+	join Items1479 i 
+	on i.item_id=o.item_id
+)
+
+, cte_pivot  as (
+	select Category,  Monday, Tuesday,Wednesday,Thursday, Friday,Saturday,Sunday
+	from 
+	(
+		select Category, Weekday, quantity
+	from 
+	cte1 cc) c
+	PIVOT (
+	sum( quantity) 
+	FOR Weekday in (Monday, Tuesday,  Wednesday, Thursday,  Friday, Saturday, Sunday)
+	) as u
+)
+
+select i.item_category,
+	isnull(Monday, 0) Monday, 
+	isnull(Tuesday,0) as Tuesday,
+	isnull(Wednesday, 0) Wednesday,
+	isnull(Thursday, 0) Thursday, 
+	isnull(Friday, 0) Friday,
+	isnull(Saturday, 0) Saturday,
+	isnull(Sunday, 0) Sunday
+ from cte_pivot c
+right join (
+select distinct item_category  from Items1479 
+) i
+on i.item_category=c.Category
+
+>>> Plan - 0.04 
+>>> LIO - 21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table Orders1479 (
+
+ order_id       int     ,
+ customer_id    int     ,
+ order_date     date    , 
+ item_id        varchar (20) ,
+ quantity       int     )
+
+create table Items1479 (
+ item_id        varchar(20) ,
+ item_name      varchar(20) ,
+ item_category  varchar(20)
+)
+
+insert Orders1479 values
+( 1  , 1  , '2020-06-01'  , 1 , 10  )  ,
+( 2  , 1  , '2020-06-08'  , 2 , 10  )  ,
+( 3  , 2  , '2020-06-02'  , 1 , 5   )  ,
+( 4  , 3  , '2020-06-03'  , 3 , 5   )  ,
+( 5  , 4  , '2020-06-04'  , 4 , 1   )  ,
+( 6  , 4  , '2020-06-05'  , 5 , 5   )  ,
+( 7  , 5  , '2020-06-05'  , 1 , 10  )  ,
+( 8  , 5  , '2020-06-14'  , 4 , 5   )  ,
+( 9  , 5  , '2020-06-21'  , 3 , 5   )  
+
+insert Items1479 values
+( 1  , 'LC Alg. Book  ' , 'Book   '     )  ,
+( 2  , 'LC DB. Book   ' , 'Book   '     )  ,
+( 3  , 'LC SmarthPhone' , 'Phone  '     )  ,
+( 4  , 'LC Phone 2020 ' , 'Phone  '     )  ,
+( 5  , 'LC SmartGlass ' , 'Glasses'     )  ,
+( 6  , 'LC T-Shirt XL ' , 'T-Shirt'     ) 

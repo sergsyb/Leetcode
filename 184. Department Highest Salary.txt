@@ -1,0 +1,36 @@
+184. Department Highest Salary
+
+-- var1 with rank --
+select Department, Employee, Salary from (
+	select d.Name as Department  , e.Name as Employee,  Salary, rank () over (partition by DepartmentId  order by Salary desc ) rn
+	from Employee184 e
+	join Department184 d
+	on e.DepartmentId = d.Id
+) r where rn=1
+
+
+-- var2 with max group  --
+select d.Name as Department , e.Name as Employee, Salary 
+from Employee184 e
+	join Department184 d
+	on e.DepartmentId = d.Id
+join (select DepartmentId, max(salary) max_sal
+from Employee184
+group by DepartmentId) t
+on t.max_sal=e.Salary
+
+
+-------------------------------------------
+create table Employee184
+(
+id int,
+Name varchar(10),
+Salary 
+)
+
+insert Employee184 values
+( 1  , 'Joe  ' , 70000  , 1)            ,
+( 2  , 'Jim  ' , 90000  , 1)            ,
+( 3  , 'Henry' , 80000  , 2)            ,
+( 4  , 'Sam  ' , 60000  , 2)            ,
+( 5  , 'Max  ' , 90000  , 1)     

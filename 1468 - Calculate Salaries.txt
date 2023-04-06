@@ -1,0 +1,27 @@
+1468 - Calculate Salaries
+
+-- Var1 with max over
+
+select company_id ,employee_id ,employee_name, 
+case	when max_salary_in_co<1000 then salary
+		when max_salary_in_co>=1000 and max_salary_in_co<=10000 then salary*(1-0.24)
+		else salary *(1-0.49) end salary2
+from (
+	  select company_id ,employee_id ,employee_name, salary, max (salary) over (partition by company_id) max_salary_in_co
+	  from Salaries1468
+	  )t
+
+
+-- Var2 with max and group by 
+
+select s.company_id ,employee_id ,employee_name, 
+case	when max_salary_in_co<1000 then salary
+		when max_salary_in_co>=1000 and max_salary_in_co<=10000 then salary*(1-0.24)
+		else salary *(1-0.49) end salary2
+from Salaries1468 s
+join 
+(
+	  select company_id , max (salary)  max_salary_in_co
+	  from Salaries1468 group by company_id
+	  )ms
+ on ms.company_id=s.company_id

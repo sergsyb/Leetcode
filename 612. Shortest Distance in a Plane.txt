@@ -1,0 +1,5 @@
+	select round (min (SQRT(SQUARE(p2.x-p1.x) +SQUARE(p2.y-p1.y))),2) as min_lenght
+	--*,  SQRT(SQUARE(p2.x-p1.x) +SQUARE(p2.y-p1.y))  as lenght
+	from Point2D p1
+	cross join Point2D p2
+	where p1.x<>p2.x or p1.y<>p2.y

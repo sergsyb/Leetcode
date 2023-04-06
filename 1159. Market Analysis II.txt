@@ -1,0 +1,15 @@
+1159. Market Analysis II
+
+  select user_id , case when o.item_id is null then 'no' else 'yes' end second_item_fav_brand 
+  
+  from Users1158 u 
+  join items1158 i
+  on u.favorite_brand=i.item_brand
+  left join
+  (
+	select seller_id, item_id from (
+		select seller_id, item_id, ROW_NUMBER()  over (partition by seller_id order by order_date ) rn
+		from  orders1159 
+	) t where rn=2
+  ) o
+  on o.seller_id= u.user_id and o.item_id=i.item_id

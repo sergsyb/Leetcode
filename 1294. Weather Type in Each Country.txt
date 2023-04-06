@@ -1,0 +1,11 @@
+1294. Weather Type in Each Country
+
+  SELECT  c.country_name,
+   case	when avg (weather_state) <=15 then 'Cold'
+		when avg (weather_state) >=25 then 'Hot'
+		else 'Warm' end as Weather_type
+  FROM Weather1294 w
+  join Countries1294 c
+  on w.country_id=c.country_id
+  where MONTH(day) =11
+  group by c.country_name

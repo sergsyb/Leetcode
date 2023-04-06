@@ -1,0 +1,76 @@
+1440. Evaluate Boolean Expression
+
+-----Var1 with subquery plan chipper  -------
+with cte1 as (
+select left_operand, right_operand,
+(select value from Variables1440 where e.left_operand=name) left_value,
+operator,
+(select value from Variables1440 where e.right_operand=name) right_value
+from Expressions1440 e
+)
+
+select   left_operand, operator,  right_operand, 
+				case  when operator='>' then 
+				case when left_value>right_value then 'true' else 'false' end 
+				when operator='<' then 
+				case when left_value<right_value then 'true' else 'false' end 
+				when operator='=' then 
+				case when left_value=right_value then 'true' else 'false' end  
+	end as result
+	from cte1
+
+>>> Estimated subtree cost - 0.010
+>>>  LIO - 13
+Table 'Variables1440'. Scan count 12, logical reads 12
+Table 'Expressions1440'. Scan count 1, logical reads 1
+
+
+-----Var2 with Join 3 table -------
+
+
+select  left_operand, operator,  right_operand, 
+	case	when operator='>' and left_value>right_value then 'true' 
+			when operator='<' and left_value<right_value then 'true' 
+			when operator='=' and left_value=right_value then 'true' 
+			else 'false' 
+	end as result
+    from 
+	(
+	select e.left_operand, e.operator,e.right_operand , v1.value as left_value, v2.value as right_value
+	from Expressions1440 e
+	join Variables1440 v1
+	on v1.name=e.left_operand
+	join Variables1440 v2
+	on v2.name=e.right_operand
+	) t
+
+>>> Estimated subtree cost - 0.028
+>>>  LIO - 8
+Table 'Variables1440'. Scan count 2, logical reads 7
+Table 'Expressions1440'. Scan count 1, logical reads 1
+
+==============================================================
+create table Variables1440(
+name           varchar ,
+value          int  )
+
+insert Variables1440 values 
+('x', 66),
+('y', 77)
+
+create table Expressions1440
+(
+ left_operand varchar(15),
+ operator   varchar,   
+ right_operand varchar(15)
+)
+
+insert Expressions1440 values
+( 'x'   , '>'    , 'y' ) ,
+( 'x'   , '<'    , 'y' ) ,
+( 'x'   , '='    , 'y' ) ,
+( 'y'   , '>'    , 'x' ) ,
+( 'y'   , '<'    , 'x' ) ,
+( 'x'   , '='    , 'x' )
+
+

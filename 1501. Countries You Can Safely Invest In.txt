@@ -1,0 +1,32 @@
+1501. Countries You Can Safely Invest In
+
+  select 
+  c.name
+  from Country1501 c 
+  join Person1501 p
+  on c.country_code=substring (p.phone_number, 1, 3)
+  join Calls1501 a
+  on p.id in (caller_id,callee_id)
+  group by  c.name
+  having avg (duration) > (select avg(duration) from Calls1501 )
+ 
+
+--- The same but with union
+
+with all_calls as (
+  select caller_id as call_id, duration from Calls1501
+  union 
+  select callee_id, duration from Calls1501
+  )
+
+   select 
+  c.name, avg (duration) duration
+  from Country1501 c 
+  join Person1501 p
+  on c.country_code=substring (p.phone_number, 1, 3)
+  join Calls1501 a
+  on p.id in (caller_id,callee_id)
+  group by  c.name
+  having  avg (duration)> (select avg (duration) from Calls1501)
+
+

@@ -1,0 +1,8 @@
+1158. Market Analysis I
+
+  select user_id, join_date, isnull(cnt, 0) as orders_in_2019 from Users1158 u
+  left join (
+	select buyer_id, count(1) cnt
+	from orders1158 where order_date between '2019-01-01' and '2019-12-31'
+	group by buyer_id) t
+	on t.buyer_id=u.user_id

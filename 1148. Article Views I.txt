@@ -1,0 +1,6 @@
+1148. Article Views I
+
+select distinct author_id from Views1148 v 
+  where exists (
+	select * from Views1148 where v.author_id=author_id and author_id=viewer_id
+  )

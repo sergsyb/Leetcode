@@ -1,0 +1,180 @@
+
+
+------------------------------------------------------------
+with days as (
+	select top 1 OnHandQuantity, event_datetime as 'day0_date', 
+	dateadd (day, -90, event_datetime) as 'day90_date',
+	dateadd (day, -180, event_datetime) as 'day180_date',
+	dateadd (day, -270, event_datetime) as 'days270_date',
+	dateadd (day, -365, event_datetime) as 'days365_date'
+	from warehouse
+)
+, day90 as (
+select least (OnHandQuantity, quantity90_draft) as quantity90 from (
+	select  d.OnHandQuantity, sum(w.OnHandQuantityDelta) quantity90_draft from days d
+	cross join warehouse w
+	where w.event_type='Inbound' and event_datetime>day90_date
+	group by d.OnHandQuantity
+	) t
+)
+
+, day180 as (
+  -- Выбрать меньше - (Остаток - кол-во в 90 периоде) VS ( 2 прихода за 2 периода)
+ select least (OnHandQuantity-quantity90, quantity180_draft+quantity90) as quantity180 from (
+	select  d.OnHandQuantity, sum(w.OnHandQuantityDelta) quantity180_draft from days d
+	cross join warehouse w
+	where w.event_type='Inbound' and event_datetime >= day180_date and event_datetime< day90_date
+	group by d.OnHandQuantity
+)t
+	cross join day90 
+)
+
+, day270 as (
+  -- Выбрать меньше - (Остаток - (кол-во в 90 периоде + кол-во в 270 периоде ) VS ( 3 прихода за 3 периода)
+ select least (OnHandQuantity-(quantity90+quantity180), quantity270_draft+ quantity180+quantity90) as quantity270 from (
+	select  d.OnHandQuantity, sum(w.OnHandQuantityDelta) quantity270_draft from days d
+	cross join warehouse w
+	where w.event_type='Inbound' and event_datetime >= day180_date and event_datetime< day90_date
+	group by d.OnHandQuantity
+)t
+	cross join day90 
+	cross join day180
+)
+
+, day365 as (
+  -- Выбрать меньше - (Остаток - (кол-во в 90 периоде + кол-во в 180 периоде + кол-во в 270 периоде ) VS ( 4 прихода за 4 периода)
+ select least (OnHandQuantity-(quantity90+quantity180+quantity270), quantity365_draft + quantity270 + quantity180+quantity90) as quantity365 from (
+	select  d.OnHandQuantity, sum(w.OnHandQuantityDelta) quantity365_draft from days d
+	cross join warehouse w
+	where w.event_type='Inbound' and event_datetime >= day180_date and event_datetime< day90_date
+	group by d.OnHandQuantity
+)t
+	cross join day90 
+	cross join day180
+	cross join day270 
+)
+
+
+select quantity90 as '0-90 days old' , quantity180 '91-180 days old', quantity270 '181-270 days old', quantity365 '271 – 365 days old'
+from day90 
+	cross join day180
+	cross join day270 
+	cross join day365
+
+===========================
+--- Var2 ---
+
+
+/*begin tran
+update warehouse set OnHandQuantity=78, OnHandQuantityDelta=299 where id='SH0013'
+update warehouse set OnHandQuantity=278, OnHandQuantityDelta=99 where id='SH0013'
+commit
+*/
+with cte1 as (
+select *, case when event_type='Inbound' then OnHandQuantityDelta else 0 end as Inbound,
+case when event_datetime >= dateadd (day, -90, '2020-05-25') then  'a'
+	when event_datetime between dateadd (day, -180, '2020-05-25') and dateadd (day, -91, '2020-05-25')   then 'b'
+	when event_datetime between  dateadd (day, -270, '2020-05-25')  and  dateadd (day, -181, '2020-05-25') then 'c'
+	when event_datetime between  dateadd (day, -365, '2020-05-25')  and dateadd (day, -270, '2020-05-25') then 'd'end as Interval
+from warehouse
+)
+, cte2 as (
+select distinct Interval
+, (select top 1 OnHandQuantity from  warehouse order by event_datetime desc) rest
+, sum(Inbound) over (partition by Interval  ) prihod
+from cte1
+where Interval is not null
+)
+
+, cte3 as (   -- На складе осталось товара меньше чем total_prihod за этот период,  значит никаких старых остатков нет.. Ни за какие периоды
+-- для такого интервала выставляем свойство no_more_old_intervals =1
+select interval, rest, prihod,
+sum(prihod) over (order by interval ) total_prihod,
+case when rest<sum(prihod) over (order by interval ) then 1 else 0 end as  no_more_old_intervals
+from cte2
+)
+
+
+select 
+(select least (rest, total_prihod)  from cte3 where Interval='a' ) as '0-90 days old',
+isnull((select least (rest, total_prihod)  from cte3 where Interval='b'
+ and (select sum(no_more_old_intervals) from cte3 where Interval<'b') =0), 0) as '91-180 days old',
+
+isnull((select least (rest, total_prihod)  from cte3 where Interval='c'
+ and (select sum(no_more_old_intervals) from cte3 where Interval<'c') =0), 0) as  '181-275 days old',
+
+isnull((select least (rest, total_prihod)  from cte3 where Interval='d'
+ and (select sum(no_more_old_intervals) from cte3 where Interval<'d') =0), 0) as  '275-365 days old'
+
+
+
+
+
+==================
+
+Q) We want to generate an inventory age report which would show the distribution of remaining inventory across the length of time the inventory has been sitting at the warehouse. We are trying to classify the inventory on hand across the below 4 buckets to denote the time the inventory has been lying the warehouse.
+
+0-90 days old 
+91-180 days old
+181-270 days old
+271 – 365 days old
+
+For example, the warehouse received 100 units yesterday and shipped 30 units today, then there are 70 units which are a day old.
+
+The warehouses use FIFO (first in first out) approach to manage inventory, i.e., the inventory that comes first will be sent out first. 
+ID	OnHandQuantity	OnHandQuantityDelta	event_type	event_datetime
+SH0013	78		299			OutBound	2020-05-25 00:25:00.000
+SH0012	377		31			InBound		2020-05-24 22:00:00.000
+SH0011	346		1			OutBound	2020-05-24 15:01:00.000
+SH0010	346		1			OutBound	2020-05-23 05:00:00.000
+SH009	348		102			InBound		2020-04-25 18:00:00.000
+SH008	246		43			InBound		2020-04-25 02:00:00.000
+SH007	203		2			OutBound	2020-02-25 09:00:00.000
+SH006	205		129			OutBound	2020-02-18 07:00:00.000
+SH005	334		1			OutBound	2020-02-18 08:00:00.000
+SH004	335		27			OutBound	2020-01-29 05:00:00.000
+SH003	362		120			InBound		2019-12-31 02:00:00.000
+SH002	242		8			OutBound	2019-05-22 00:50:00.000
+SH001	250		250			InBound		2019-05-20 00:45:00.000 
+
+
+For example, on 20th May 2019, 250 units were inbounded into the FC. On 22nd May 2019, 8 units were shipped out (outbound) from the FC, reducing inventory on hand to 242 units. On 31st December, 120 units were further inbounded into the FC increasing the inventory on hand from 242 to 362.On 29th January 2020, 27 units were shipped out reducing the inventory on hand to 335 units.
+On 29th January, of the 335 units on hands, 120 units were 0-90 days old (29 days old) and 215 units were 181-270 days old (254 days old).
+
+ Columns:
+ID of the log entry
+OnHandQuantity: Quantity in warehouse after an event
+OnHandQuantityDelta: Change in on-hand quantity due to an event
+event_type: Inbound – inventory being brought into the warehouse; Outbound – inventory being sent out of warehouse
+event_datetime: date- time of event
+The data is sorted with latest entry at top.
+
+Sample output:
+0-90 days old	91-180 days old	181-270 days old	271 – 365 days old
+176		102		0			0
+
+======================================================
+create table warehouse
+(
+	ID						varchar(10),
+	OnHandQuantity			int,
+	OnHandQuantityDelta		int,
+	event_type				varchar(10),
+	event_datetime			timestamp
+);
+
+insert into warehouse values
+('SH0013', 278,   99 ,   'OutBound', '2020-05-25 0:25'), 
+('SH0012', 377,   31 ,   'InBound',  '2020-05-24 22:00'),
+('SH0011', 346,   1  ,   'OutBound', '2020-05-24 15:01'),
+('SH0010', 346,   1  ,   'OutBound', '2020-05-23 5:00'),
+('SH009',  348,   102,   'InBound',  '2020-04-25 18:00'),
+('SH008',  246,   43 ,   'InBound',  '2020-04-25 2:00'),
+('SH007',  203,   2  ,   'OutBound', '2020-02-25 9:00'),
+('SH006',  205,   129,   'OutBound', '2020-02-18 7:00'),
+('SH005',  334,   1  ,   'OutBound', '2020-02-18 8:00'),
+('SH004',  335,   27 ,   'OutBound', '2020-01-29 5:00'),
+('SH003',  362,   120,   'InBound',  '2019-12-31 2:00'),
+('SH002',  242,   8  ,   'OutBound', '2019-05-22 0:50'),
+('SH001',  250,   250,   'InBound',  '2019-05-20 0:45');
+COMMIT;

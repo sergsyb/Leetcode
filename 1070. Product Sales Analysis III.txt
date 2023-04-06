@@ -1,0 +1,33 @@
+1070. Product Sales Analysis III
+
+-- V1 -- with join
+select 
+s.product_id ,year, quantity,price
+ from Sales1070 s
+join (
+select product_id , min (year) as first_sale
+from Sales1070 s1
+group by product_id
+) g
+on g.first_sale = s.year and s.product_id=g.product_id
+ 
+>>Estimated subtree cost - 0.014
+>>LIO - 1
+
+
+-- V2 with not exists
+
+select 
+s.product_id ,year, quantity,price
+ from Sales1070 s
+ where exists
+ ( select product_id ,  first_sale
+ from ( select product_id , min (year) as first_sale
+		from Sales1070 s1
+		group by product_id
+		) t
+  where t.product_id  =s.product_id and t.first_sale=s.year
+  )
+ 
+>>Estimated subtree cost -0.0067
+>>LIO -4

@@ -1,0 +1,14 @@
+597. Friend Requests I: Overall Acceptance Rate
+
+select round(
+	1.0*(select count(distinct concat(requester_id, '-', accepter_id )) from RequestAccepted597)
+	/
+	(select count(distinct concat(sender_id, '-', send_to_id )) from friend_request597) , 2)
+
+
+
+select round (
+	1.0*(select count(1) from (select distinct requester_id, accepter_id  from RequestAccepted597 )r)
+	/
+	(select count(1) from (select distinct sender_id,  send_to_id  from friend_request597 where 1=2)r )
+	, 2) as  accept_rate

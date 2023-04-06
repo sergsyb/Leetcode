@@ -1,0 +1,8 @@
+1113. Reported Posts
+
+
+select extra,  count(distinct post_id) as number_report
+from Actions  a
+  where a.action_date= dateadd(day, -1, '2019-07-05')
+  and a.action='report'
+  group by extra  

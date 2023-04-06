@@ -1,0 +1,98 @@
+1205. Monthly Transactions II
+
+---- Var 1 -- 1 grouping more optimal
+
+with approvetran_chargeback as (
+  select  t.trans_date
+	, t.country, amount , 'approved' as typetran
+	from Transactions1205 t
+	where state='approved'
+	union all
+	select  c.trans_date,  country,  t.amount , 'chargeback' as typetran
+	from Transactions1205 t
+	join Chargebacks1205 c
+	on t.id= c.trans_id
+	)
+
+	select convert(char(7), trans_date) as month, country,
+	isnull(count(case when typetran='approved' then 1 end ), 0) approved_count ,
+	isnull(sum(case when typetran='approved' then amount end ), 0) approved_amount ,
+	isnull(count(case when typetran='chargeback' then 1 end ), 0) chargeback_count,
+	isnull(sum(case when typetran='chargeback' then amount end ), 0) chargeback_amount 
+	from approvetran_chargeback 
+	group by convert(char(7), trans_date), country
+	order by  2, 1
+
+
+>> Estimated subtree cost - 0.039
+>> LIO - 3
+
+---- Var 2 ---  2 grouping and extra tab for all month -- Less optimal
+with approved_tran as (
+	select convert(char(7),t.trans_date) as month
+	, t.country
+	, count(case when state='approved' then 1 end) approved_count
+	, sum(case when state='approved' then amount end) approved_amount
+	from Transactions1205 t
+	group by convert(char(7),t.trans_date), country
+ ),
+
+chargeback_tran as (
+	select convert(char(7), c.trans_date) as month,  country
+  , count(c.trans_id) as  chargeback_count
+  , sum(case when c.trans_id is not null then t.amount end) as chargeback_amount 
+	from Transactions1205 t
+	join Chargebacks1205 c
+	on t.id= c.trans_id
+	group by convert(char(7),c.trans_date), country
+  ),
+
+all_months as(
+  select  convert(char(7),  trans_date) as month from Transactions1205
+  union 
+  select  convert(char(7),trans_date)  from Chargebacks1205
+  )
+
+
+select am.month, coalesce (at.country, ct.country) as country, 
+isnull(approved_count, 0) approved_count, 
+isnull(approved_amount, 0)  approved_amount,
+isnull(chargeback_count,0) chargeback_count, 
+isnull(chargeback_amount , 0) chargeback_amount
+from all_months am
+left join approved_tran at
+on at.month=am.month
+left join chargeback_tran ct
+on am.month=ct.month 
+order by 1,2
+
+>> Estomated subtree cost - 0.108
+>> LIO - 22
+
+
+---------------------------------------------
+
+create table Transactions1205
+ (id              int     ,
+ country         varchar(15) ,
+ state           varchar(15)    ,
+ amount          int     ,
+ trans_date      date   )
+
+ create table Chargebacks1205
+( trans_id        int     ,
+ trans_date      date     )
+
+ ----------------------------------
+
+ insert Transactions1205 values
+ ( 101 , 'US'  , 'approved' , 1000   , '2019-05-18') ,
+( 102 , 'US'  , 'declined' , 2000   , '2019-05-19') ,
+( 103 , 'US'  , 'approved' , 3000   , '2019-06-10') ,
+( 104 , 'US'  , 'declined' , 4000   , '2019-06-13') ,
+( 105 , 'US'  , 'approved' , 5000   , '2019-06-15') 
+
+insert Chargebacks1205 values
+( 102   , '2019-05-29') ,
+( 101   , '2019-06-30') ,
+( 105   , '2019-09-18')

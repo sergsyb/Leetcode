@@ -1,0 +1,271 @@
+2153. The Number of Passengers in Each Bus II
+
+
+==== Var #1 - the best with help recursive table ---minimal plan
+
+with bus_and_pass as (
+	select bus_id, capacity,  count(*) as cnt
+	from Buses2153 b
+	full join Passengers2153 p
+	on p.arrival_time<=b.arrival_time
+	group by bus_id, capacity
+	)
+	, mb as (select max (bus_id) max_bus_id from Buses2153)
+
+   ,rectab as ( -- passengers left by bus    -- total pass left by buss    
+	select *, LEAST(cnt, capacity) as pass, LEAST(cnt, capacity) as in_bus_total, 1 as n -- for the first bus only
+	from bus_and_pass where bus_id=1
+	union all               --- in the next busess
+	select b.bus_id, b.capacity, b.cnt, LEAST(b.cnt-r.in_bus_total, b.capacity) , r.in_bus_total+LEAST(b.cnt-r.in_bus_total, b.capacity)  , n+1 
+	
+	from
+	bus_and_pass b join rectab r on r.n+1=b.bus_id where n < (select max_bus_id  from mb )
+    )
+
+	select bus_id, pass from rectab
+
+
+
+=========  Var #2 === row by row processing === 8 sec -- when 2K busess & 20K pass were used
+
+declare @Source AS TABLE ( bus_id INT, capacity int,  cnt int) 
+declare @Result AS TABLE ( bus_id INT,  pass int, cnt int, capacity int, rest int, on_buss_totall int)
+declare @cnt int, @pass_out int
+select @cnt=1 , @pass_out=0
+
+
+insert @Source 
+select bus_id, capacity,  count(*) cnt 
+	from Buses2153 b
+	full join Passengers2153 p
+	on p.arrival_time<=b.arrival_time
+	group by bus_id, capacity
+
+while @cnt<=(select max (bus_id) from @Source)
+begin
+
+insert @Result  select  bus_id, least (capacity, cnt-@pass_out) , cnt, capacity, 
+cnt-(@pass_out + least (capacity, cnt-@pass_out))  , (@pass_out + least (capacity, cnt-@pass_out))
+
+from @Source where bus_id=@cnt
+select @pass_out=@pass_out + (select pass from @Result where  bus_id=@cnt)
+select @cnt=@cnt+1
+end
+
+select * from @Result 
+
+=========  Var #2 ============ with cursor -- 12 sec -- when 2K busess & 20K pass were used
+
+DECLARE @Result AS TABLE
+( bus_id INT,  pass int, cnt int, capacity int,  rest int,  on_bus_total int);
+
+declare @rest_pass int,  @on_bus_total int,
+@bus_id int, @capacity int, @cnt int
+
+
+
+select @rest_pass=0
+select @on_bus_total=0
+
+DECLARE tx_cursor CURSOR FAST_FORWARD FOR
+select bus_id, capacity,  count(*) cnt from Buses2153 b
+right join Passengers2153 p
+on p.arrival_time<=b.arrival_time
+group by bus_id, capacity
+order by bus_id
+
+OPEN tx_cursor;
+FETCH NEXT FROM tx_cursor INTO @bus_id,  @capacity, @cnt;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+if @cnt-@on_bus_total >=@capacity
+	begin 
+	select @rest_pass=@cnt-@capacity-@on_bus_total
+	select @on_bus_total=@on_bus_total+@capacity
+	insert @Result values (  @bus_id, @capacity, @cnt, @capacity, @rest_pass,  @on_bus_total )
+	end
+else
+	begin
+
+	insert @Result values( @bus_id,  @cnt-@on_bus_total , @cnt, @capacity,  0,  @cnt )
+	select @on_bus_total=@cnt 
+	select @rest_pass=0
+	end
+
+FETCH NEXT FROM tx_cursor INTO @bus_id,  @capacity, @cnt;
+END
+
+CLOSE tx_cursor;
+DEALLOCATE tx_cursor;
+
+select * from @Result
+
+
+============= Var 3 using cross joins ====================
+with main as (
+select bus_id, capacity,  count(*) cnt from Buses2153 b
+right join Passengers2153 p
+on p.arrival_time<=b.arrival_time
+group by bus_id, capacity
+)
+
+,  bus1 as (
+select  bus_id, least (capacity, cnt) as passcnt_bus1 from main where bus_id=1
+)
+
+,  bus2 as (
+select m.bus_id, least (capacity, cnt-passcnt_bus1) as passcnt_bus2 from main m
+cross join bus1
+where m.bus_id=2
+)
+,  bus3 as (
+select m.bus_id, least (capacity, cnt-passcnt_bus1-passcnt_bus2) as passcnt_bus3 from main m
+cross join bus1
+cross join bus2
+where m.bus_id=3
+)
+
+
+select * from bus1
+union 
+select * from bus2
+union 
+select * from bus3
+
+========  VAR 3.1 with dinamic sql & cross joins 
+
+
+declare @cnt int, @bus_cnt int, @sql_intro varchar (512), @sql varchar (max), @sqlout varchar(max),  @sql_exec varchar (max), @pass_sum varchar (1024), @crossjoin varchar (1024)
+select @bus_cnt= max (bus_id) from Buses2153 
+
+select  @pass_sum='', @crossjoin ='', @sqlout=''
+set @sql_intro ='
+with main as (
+select bus_id, capacity,  count(*) cnt from Buses2153 b
+right join Passengers2153 p
+on p.arrival_time<=b.arrival_time
+group by bus_id, capacity
+)
+'
+select @sql=''
+select @cnt=1
+
+	while @cnt<=@bus_cnt
+	begin
+	set @sql = concat( @sql, ',
+	bus' , cast(@cnt as  varchar(3)) ,' as (
+	select  m.bus_id, least (capacity, cnt ' , @pass_sum , ') as passcnt_bus', cast(@cnt as  varchar(3)) ,' from main m', @crossjoin, ' where  m.bus_id=' + cast(@cnt as  varchar(3)) + ')'
+	  )
+	select @crossjoin = @crossjoin + ' cross join bus'+cast(@cnt as  varchar(3))
+	select @pass_sum=@pass_sum + ' - passcnt_bus' + cast(@cnt as  varchar(3))
+	
+	if @cnt=1
+	 set @sqlout='
+	 select * from bus1'
+	 else set @sqlout= concat (@sqlout, '
+	 union all select * from bus', cast(@cnt as  varchar(3)) )
+	
+	select @cnt =@cnt+1
+
+	end
+--	select @sqlout
+select @sql_exec= @sql_intro +  @sql
+select @sql_exec=@sql_exec+@sqlout
+exec( @sql_exec)
+
+
+========= Var 3
+
+declare @Source AS TABLE ( bus_id INT, capacity int,  cnt int)
+declare @Result AS TABLE ( bus_id INT,  pass int)
+declare @cnt int, @pass_out int
+select @cnt=1 , @pass_out=0
+
+
+insert @Source 
+select bus_id, capacity,  count(*) cnt 
+	from Buses2153 b
+	full join Passengers2153 p
+	on p.arrival_time<=b.arrival_time
+	group by bus_id, capacity
+
+
+
+while @cnt<=(select max (bus_id) from @Source)
+begin
+
+insert @Result  select  bus_id, least (capacity, cnt-@pass_out)  from @Source where bus_id=@cnt
+select @pass_out=@pass_out + (select pass from @Result where  bus_id=@cnt)
+select @cnt=@cnt+1
+end
+
+select * from @Result 
+
+===================================================
+===================================================
+
+
+CREATE TABLE dbo.Buses2153(
+	bus_id int NULL,
+	arrival_time datetime NULL,
+	capacity int NULL
+) 
+GO
+
+CREATE TABLE dbo.Passengers2153(
+	passenger_id int NULL,
+	arrival_time datetime NULL
+) 
+GO
+
+-- delete Buses2153
+declare @cnt int, @d datetime
+select @cnt=1, @d=cast ('2023-01-01 00:00:00' as datetime)
+
+while @cnt<=2000
+begin
+	
+	insert Buses2153 values (@cnt, DATEADD(MINUTE, 10*@cnt, @d ) , rand ()*25)
+	select @cnt=@cnt+1
+end
+
+select * from Buses2153
+
+
+--------------------------;
+--delete Passengers2153
+declare @cnt int, @d datetime
+select @cnt=1, @d=cast ('2023-01-01 00:00:00' as datetime)
+
+while @cnt<=20000
+begin
+	
+	insert Passengers2153 values (@cnt, DATEADD(MINUTE, @cnt, @d ))
+	select @cnt=@cnt+1
+end
+
+select * from Passengers2153
+
+=============== leetcode sample ======================
+create table Buses2153
+(bus_id int,
+arrival_time int,
+capacity  int   )
+
+create table Passengers2153
+(passenger_id int, 
+arrival_time int)
+
+insert Buses2153 values      
+( 1  , 2, 1 )  ,
+( 2  , 4, 10 )  ,
+( 3  , 7, 2 )  
+
+insert Passengers2153 values 
+( 11  , 1 ) ,
+( 12  , 1) ,
+( 13  , 5 ) ,
+( 14  , 6 ), 
+( 15  , 7 )
+
+

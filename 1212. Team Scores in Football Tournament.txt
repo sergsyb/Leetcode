@@ -1,0 +1,22 @@
+1212. Team Scores in Football Tournament 
+
+ with cte1 as (
+  select match_id, host_team, guest_team,   host_goals, guest_goals ,
+  case  when host_goals > guest_goals then 3 
+		when host_goals = guest_goals then 1 else 0  end host_score,
+  case when host_goals < guest_goals then 3 
+		when host_goals = guest_goals then 1 else 0  end gest_score
+  from Matches 
+  )
+  ,
+  cte2 as (
+  select  host_team as team_id, host_score as score
+  from cte1
+  union all
+  select guest_team, gest_score from cte1)
+
+  select t.team_id, t.team_name, isnull(sum(c.score), 0) score from cte2 c 
+  right join Teams t
+  on t.team_id=c.team_id
+  group by t.team_id, t.team_name
+  order by 1

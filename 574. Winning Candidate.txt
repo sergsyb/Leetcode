@@ -1,0 +1,23 @@
+574. Winning Candidate
+
+with cte1 as (
+    select top 1 candidateid, count(*) as counts
+    from vote574
+    group by candidateid
+    order by counts desc
+)
+
+select name
+from candidate574 c join cte1 on c.id = cte1.candidateid
+
+LIO -1 т.к. из vote574 взяли одну строки и потом соединили
+
+-------------------------------------
+select top (1) name
+from Candidate574 c
+join Vote574 v
+on c.id=v.CandidateId
+group by name
+order by count(candidateId) desc
+
+LIO -5  - все строки и Vote574  прочитали

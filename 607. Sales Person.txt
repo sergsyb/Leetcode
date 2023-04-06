@@ -1,0 +1,54 @@
+607. Sales Person
+
+-- V1 -- 3 join
+select   s.name from salesperson607 s
+left join 
+(select sales_id from orders607 o
+	join company607 c
+	on o.com_id=c.com_id
+	where c.name='RED') t
+on t.sales_id=s.sales_id
+where t.sales_id is null
+
+>>> Plan - 0.0381
+>>> LIO - 16
+
+--V2 -- Join & Not IN
+
+SELECT s.name FROM salesperson607 s
+WHERE s.sales_id NOT IN 
+	(SELECT o.sales_id FROM orders607 o
+     LEFT JOIN
+	company607 c ON o.com_id = c.com_id
+    WHERE c.name = 'RED')
+
+>>> Plan - 0.032
+>>> LIO - 17
+
+
+
+=========================================
+create table salesperson607
+(
+sales_id int ,
+name varchar(10),
+salary int,
+commission_rate int,
+hire_date date
+)
+
+create table company607
+(
+com_id int, 
+name varchar(10),
+city varchar(10)
+)
+
+create table orders607
+(
+order_id int,
+order_date date, 
+com_id  int,
+sales_id int,
+amount int
+)

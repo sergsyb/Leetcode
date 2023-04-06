@@ -1,0 +1,61 @@
+---- Variant 1 -----  Sorting caller_id and recipient_id to idenify one pair
+	with cte1 as (
+	select 
+	case when caller_id < recipient_id then caller_id else recipient_id end  as call_1, 
+	case when recipient_id  < caller_id then caller_id  else recipient_id end as call_2,
+	rank () over (partition by day (call_time) order by call_time ) rn1,
+	rank () over (partition by day (call_time) order by call_time desc) rn2
+	from Calls1972
+)
+--, cte2 as (
+select c1.call_1, c1.call_2 from cte1 c1 
+join cte1 c2 
+on  c1.call_1=c2.call_1  -- пара звонивших одна и та же
+and c1.call_2=c2.call_2 -- пара звонивших одна и та же
+and c1.rn1=1 and c2.rn2=1 -- во время первого звонка и последненего звонка
+)
+
+select call_1 caller_id from cte2
+union   
+select call_2 from cte2
+
+------------ Variant 2  -- the same but use additional id_pair  ------------
+with rank_tab as (
+	select * , 
+	case when caller_id<recipient_id then concat (caller_id,  ';', recipient_id )  
+	else concat (recipient_id,  ';', caller_id ) end id_call ,             -- уникальный id пары звонящих
+	rank () over (partition by convert (date,call_time) order by call_time) rf,  -- с первого к последнему звонку
+	rank () over (partition by convert (date,call_time) order by call_time desc) rl -- с последнему к первому звонку
+	, convert (date,call_time) call_date
+	from  Calls1972  
+	)
+    , only_same_pairs_as_first_last as (
+	select f1.caller_id, f1.recipient_id
+	from rank_tab f1 join rank_tab f2
+	on f1.call_date=f2.call_date  -- в один день
+	and f1.id_call=f2.id_call    --- пара одна и таже
+	where f1.rf=1 and f2.rl=1  -- в одной строке будет первый и последний звонок для одной и той же пары
+	)
+	select caller_id from only_same_pairs_as_first_last 
+	union
+	select recipient_id  from only_same_pairs_as_first_last 
+
+
+
+------------------------------------------
+create table Calls1972
+( caller_id     int      ,
+ recipient_id  int      ,
+ call_time     datetime  )
+
+ insert Calls1972 values 
+ ( 8   , 4     , '2021-08-24 17:46:07' ),
+( 4   , 8     , '2021-08-24 19:57:13' ),
+( 5   , 1     , '2021-08-11 05:28:44' ),
+( 8   , 3     , '2021-08-17 04:04:15' ),
+( 11  , 3     , '2021-08-17 13:07:00' ),
+( 8   , 11    , '2021-08-17 22:22:22' )
+
+
+
+----------------------------------------------

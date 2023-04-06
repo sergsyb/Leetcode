@@ -1,0 +1,10 @@
+1369. Get the Second Most Recent Activity
+
+with cte1 as (
+select *, 
+ROW_NUMBER() over (partition by username order by startDate desc) rn
+, count(*) over (partition by username) cnt
+	  from UserActivity
+)
+ 
+select username, activity,startDate, endDate from cte1 where rn=2 or cnt=1

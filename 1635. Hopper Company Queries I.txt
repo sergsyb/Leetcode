@@ -1,0 +1,141 @@
+1635. Hopper Company Queries I
+
+--Var1 ----- join all_month with drivers_stat  on step2
+with all_months as (
+	select 1 as mon
+	union all
+	select mon+1 from  all_months where mon<12
+)
+, drivers_stat as(
+select	mon, count(*) as drv_cnt		
+from all_months a
+left join (
+	select driver_id, '20200101' as join_date from Drivers where join_date<'20200101'
+	union all
+	select driver_id, join_date  from Drivers
+	where year(join_date)=2020)d
+on a.mon>= MONTH(d.join_date)
+group by mon
+)
+  , aride_stat as (
+	  select month (r.requested_at) as month_areq, count (*) cnt
+	  from AcceptedRides ar
+	  join Rides r
+	  on r.ride_id=ar.ride_id
+	  where year (r.requested_at)=2020
+	  group by month (r.requested_at)
+  )
+
+ select d.mon, d.drv_cnt, isnull(ar.cnt, 0) a_rides
+ from drivers_stat d
+ left join aride_stat  ar
+ on ar.month_areq=d.mon
+
+>>> Plan 0.048
+>>> LIO 138
+
+Table 'AcceptedRides'. Scan count 1, logical reads 10
+Table 'Worktable'. Scan count 3, logical reads 108
+Table 'Rides'. Scan count 1, logical reads 1
+Table 'Drivers'. Scan count 13, logical reads 24
+
+
+-- Var2 ------
+  with all_months as (
+	  select 1 as m
+	  union all
+	  select m+1 from all_months where m<12
+  )
+  , drivers_stat as (	  
+	  select MONTH(join_date) month, count(*) cnt
+	  from Drivers
+	  where YEAR(join_date) = 2020
+	  group by MONTH(join_date)
+	  union all
+	  select 1 as m, count (*) cnt from Drivers where join_date<'20200101'
+  ) 
+  , aride_stat as (
+	  select month (r.requested_at) as month_areq, count (*) cnt
+	  from AcceptedRides ar
+	  join Rides r
+	  on r.ride_id=ar.ride_id
+	  where year (r.requested_at)=2020
+	  group by month (r.requested_at)
+  )
+
+ select am.m, sum(isnull(d.cnt, 0)) drivers, min(isnull(ar.cnt, 0)) a_rides
+ from all_months am
+ left join drivers_stat d
+ on am.m>=d.month
+ left join aride_stat  ar
+ on ar.month_areq=am.m
+ group by am.m
+
+=============
+Plan 0.069
+LIO 
+Table 'AcceptedRides'. Scan count 1, logical reads 10, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 4, logical reads 231, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Rides'. Scan count 1, logical reads 1, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Drivers'. Scan count 2, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+
+
+
+==================================================
+create table Drivers (
+driver_id    int,     
+join_date  date 
+)
+create table Rides (
+ride_id       int,     
+user_id       int,     
+requested_at  date
+)
+create table AcceptedRides (
+ride_id        int ,
+driver_id      int ,
+ride_distance  int ,
+ride_duration  int 
+)
+
+insert  Drivers values
+(10 ,' 2019-12-10') ,
+( 8  ,' 2020-1-13')  ,
+( 5  ,' 2020-2-16')  ,
+( 7  ,' 2020-3-8 ')  ,
+( 4  ,' 2020-5-17')  ,
+( 1  ,' 2020-10-24') ,
+( 6  ,' 2021-1-5') 
+
+
+insert Rides values
+(6       , 75      ,' 2019-12-9 ' ),  
+( 1       , 54      ,' 2020-2-9  ' ), 
+( 10      , 63      ,' 2020-3-4  '),  
+( 19      , 39      ,' 2020-4-6  '),  
+( 3       , 41      ,' 2020-6-3  '),  
+( 13      , 52      ,' 2020-6-22 '),  
+( 7       , 69      ,' 2020-7-16 '),  
+( 17      , 70      ,' 2020-8-25 '),  
+( 20      , 81      ,' 2020-11-2 '),  
+( 5       , 57      ,' 2020-11-9 ' ), 
+( 2       , 42      ,' 2020-12-9 '),  
+( 11      , 68      ,' 2021-1-11 '),  
+( 15      , 32      ,' 2021-1-17 '),  
+( 12      , 11      ,' 2021-1-19 '),  
+( 14      , 18      ,' 2021-1-27 ' ) 
+
+
+insert AcceptedRides values
+( 10      , 10        , 63            , 38   )         ,
+( 13      , 10        , 73            , 96   )          ,
+( 7       , 8         , 100           , 28   )          ,
+( 17      , 7         , 119           , 68    )         ,
+( 20      , 1         , 121           , 92   )          ,
+( 5       , 7         , 42            , 101   )         ,
+( 2       , 4         , 6             , 38   )          ,
+( 11      , 8         , 37            , 43    )         ,
+( 15      , 8         , 108           , 82    )         ,
+( 12      , 8         , 38            , 34    )         ,
+( 14      , 1         , 90            , 74    )
+

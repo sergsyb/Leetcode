@@ -1,0 +1,18 @@
+with all_days as(
+  select success_date as date,  'success' as type
+  from Succeeded
+  where success_date between '2019-01-01' and '2019-12-31'
+  union 
+  select fail_date , 'fail'
+  from Failed
+  where fail_date between '2019-01-01' and '2019-12-31'
+  )
+, days_with_rn as (
+	  select *, ROW_NUMBER() over (partition by type order by date) rn 
+	  from all_days
+)
+
+select type, min(date) as start_date, max(date) as end_date 
+from days_with_rn 
+group by type, dateadd (day, -rn, date)
+order by 2

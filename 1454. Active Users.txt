@@ -1,0 +1,61 @@
+1454. Active Users
+
+
+	select id, name, max(cnt) from ( 
+		select id, name,  count(dateadd(day, -rn, login_date)) cnt from (
+			select distinct l.id, name, login_date, dense_RANK() over (partition by l.id order by login_date) rn
+			from logins1454 l join Accounts1454 a
+			on l.id=a.id
+		)t
+		group by id, name,  dateadd(day, -rn, login_date)
+	) u 
+	group by id, name having max(cnt) >=5
+	-------------
+>>> Plan 0.041
+>>> Table 'logins1454'. Scan count 2, logical reads 4
+>>> Table 'Accounts1454'. Scan count 1, logical reads 1
+
+----Var2  use subquery  --- FASTEST !!
+
+with cte1 as(
+	select distinct id, login_date, dense_rank() over (partition by id order by login_date) rn
+		from logins1454)
+, cte2 as (
+	select id, count(1) cnt
+	from cte1
+	group by id, dateadd (day, -rn, login_date)
+)
+
+select c.id, (select name from Accounts1454 where id=c.id) name
+--, max(cnt)
+from cte2 c
+group by c.id
+having max(cnt)>=5
+
+>>> plan 0.040
+>>> Table 'Accounts1454'. Scan count 1, logical reads 1
+>>> Table 'logins1454'. Scan count 1, logical reads 2
+
+----Var3  use join  from v2 --- SLOW !!
+
+with cte1 as(
+	select distinct id, login_date, dense_rank() over (partition by id order by login_date) rn
+		from logins1454)
+, cte2 as (
+	select id, count(1) cnt
+	from cte1
+	group by id, dateadd (day, -rn, login_date)
+)
+
+select c.id, name 
+--, max(cnt)
+from cte2 c
+join Accounts1454 a on a.id=c.id
+group by c.id, name
+having max(cnt)>=5
+
+
+>>> plan 0.62
+>>> Table 'Worktable'. Scan count 1, logical reads 11
+>>> Table 'logins1454'. Scan count 1, logical reads 2
+>>> Table 'Accounts1454'. Scan count 1, logical reads 1

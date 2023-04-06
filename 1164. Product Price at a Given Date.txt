@@ -1,0 +1,32 @@
+1164. Product Price at a Given Date
+
+	   select distinct p.product_id, isnull(t.new_price  , 10) as price   from Products1164  p
+	   left join 
+	(
+	   select p1.product_id, p2.new_price from Products1164 p2
+	   join
+		(	select product_id, max (change_date) as max_last_date from Products1164 p
+			where change_date<='2019-08-16'
+			group by product_id
+		) p1
+		 on p1.max_last_date =p2.change_date and p1.product_id=p2.product_id
+		
+		) t
+	  on p.product_id=t.product_id
+
+-- Var2-- the same  but with  cte
+
+with last_price as (
+  select p1.product_id, p2.new_price from Products1164 p2
+	   join
+		(	select product_id, max (change_date) as max_last_date from Products1164 p
+			where change_date<='2019-08-16'
+			group by product_id
+		) p1
+		 on p1.max_last_date =p2.change_date and p1.product_id=p2.product_id	  
+)
+
+select  distinct p.product_id, isnull(l.new_price  , 10) as price   
+		from Products1164 p
+		left join last_price l
+		on l.product_id=p.product_id

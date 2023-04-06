@@ -1,0 +1,28 @@
+1613. Find the Missing IDs
+
+with maxid as (
+select max(customer_id) mid from Customers1613
+),
+
+rectab as (
+select 1 as id
+union all
+select id+1 from rectab where id < (select mid from maxid)
+)
+
+select id from rectab r
+left join Customers1613 c
+on r.id=c.customer_id
+where c.customer_id is null
+
+
+=====================
+
+create table Customers1613 (
+customer_id int,
+ customer_name varchar (20))
+
+ insert Customers1613 values 
+(1 , 'Alice'),         
+( 4, 'Bob'),
+(5, 'Charlie')

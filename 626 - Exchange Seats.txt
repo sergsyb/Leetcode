@@ -1,0 +1,44 @@
+626. Exchange Seats
+
+--V1 -- with Union
+select  ROW_NUMBER() over (order by new_id ) as new_seat_id,
+student
+from (
+	select *, id-1 as new_id from Seat626 where id%2=0
+	union 
+	select *, id+1 as new_id from Seat626 where id%2<>0
+)r
+order by new_id
+
+>> Estimated Subtree cost 0.179
+>> LIO - 2
+
+--V2 -- with Case
+select new_seat_id, student from (
+	select *, case when id%2 <> 0 and id<(select max(id) from Seat626) then id+1
+				   when id%2 = 0 then id-1
+				   else id
+				   end as new_seat_id
+	from Seat626
+) t
+order by new_seat_id
+
+
+>> Estimated Subtree cost 0.183
+>> LIO - 4
+
+
+-----------------
+create table Seat626
+(
+id int,
+student varchar (15)
+)
+
+
+insert Seat626 values
+( 1  , 'Abbot'  ) ,
+( 2  , 'Doris'   ),
+( 3  , 'Emerson' ),
+( 4  , 'Green'   ),
+( 5  , 'Jeames'  )

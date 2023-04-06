@@ -1,0 +1,3 @@
+1421. NPV Queries  
+  select  q.id ,q.year, isnull(n.npv,0) from Queries q
+  left join NPV n on n.id=q.id and n.year=q.year

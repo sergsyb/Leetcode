@@ -1,0 +1,10 @@
+1322. Ads Performance
+
+  select g.ad_id, isnull(case when Clicked+Viewed=0 then 0 else
+  Clicked*100/(Clicked+Viewed) end, 0) ad_id
+  from (
+	  select ad_id , sum(case when action='Clicked' then 1 end) Clicked,
+	  sum(case when action='Viewed' then 1 end) Viewed  
+	  from Ads
+	  group by ad_id)g
+   order by 2  desc, 1

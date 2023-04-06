@@ -1,0 +1,61 @@
+1083. Sales Analysis II
+
+--- Var1 - use case and grouping- the most optimal plan and IO
+
+select buyer_id
+from Sales1083 s
+	join Product1083 p
+	on s.product_id=p.product_id
+group by buyer_id 
+having sum( case when p.product_name='S8' then 1 else 0 end)>=1  
+   and sum(case when p.product_name='iPhone' then 1 else 0 end)=0
+
+>>Plan 0.18
+>>LIO  5
+
+
+--- Var2 - use not exists ----------------
+
+  select buyer_id from Sales1083 s
+  join Product1083 p
+  on s.product_id=p.product_id
+  where p.product_name='S8' and not exists
+  (
+	  select 1 from Sales1083 s2
+	  join Product1083 p2
+	  on s2.product_id=p2.product_id
+	  where p2.product_name='iPhone'
+	  and s.buyer_id=s2.buyer_id
+  )
+
+>>Plan 0.42
+>>LIO  10
+
+--- Var3 - use EXCEPT----------------
+  select buyer_id from Sales1083 s
+	  join Product1083 p
+	  on s.product_id=p.product_id
+	  where p.product_name='S8' 
+  except 
+	  select buyer_id from Sales1083 s2
+	  join Product1083 p2
+	  on s2.product_id=p2.product_id
+	  where p2.product_name='iPhone'
+>>Plan 0.42
+>>LIO  10
+
+
+--- Var4 -- use NOT IN 
+  select buyer_id from Sales1083 s
+  join Product1083 p
+  on s.product_id=p.product_id
+  where p.product_name='S8' and  buyer_id not in 
+  (
+	  select buyer_id from Sales1083 s
+	  join Product1083 p
+	  on s.product_id=p.product_id
+	  where p.product_name='iPhone'
+  )
+
+>>Plan 0.52
+>>LIO  7

@@ -1,0 +1,16 @@
+ 1555. Bank Account Summary
+
+ with transactions as (
+  select paid_by as user_id, -1*amount as amount, transacted_on from transaction1555
+  union 
+  select paid_to as user_id, amount, transacted_on from transaction1555
+  )
+  
+ -- , cte2 as (
+  select u.user_id,user_name,
+  credit + isnull(sum(t.amount),0) as credit_current
+  , case when  credit+ isnull(sum(t.amount),0) <0 then 'Yes' else 'No' end as credit_limit_breached
+  from transactions t
+  right join Users1555 u
+  on t.user_id=u.user_id
+  group by u.user_id,user_name, credit

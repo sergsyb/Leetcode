@@ -1,0 +1,82 @@
+262. Trips and Users
+
+--- Var 1 with joins with Users -----
+
+  select request_at , 
+  round (100.0*sum(case when status <> 'completed' then 1 else 0 end) / 
+  count  (status), 2) CancellationRate
+ 
+	from Trips262  t
+	join  Users262 u_client
+	on u_client.user_id=t.client_id 
+	join  Users262 u_driver
+	on u_driver.user_id=t.driver_id 
+ where 
+  request_at between '2013-10-01' and '2013-10-03'
+  and u_client.banned='No' and u_driver.banned='No'
+ group by request_at
+
+
+Estimated Subtree cost - 0.231
+Table 'Users262'. Scan count 2, logical reads 20
+Table 'Trips262'. Scan count 1, logical reads 1
+
+--- Var2 with not in Users
+  
+select request_at , 
+  round (100.0*sum(case when status <> 'completed' then 1 else 0 end) / 
+  count  (status), 2) CancellationRate
+  from Trips262  t
+  where 
+  request_at between '2013-10-01' and '2013-10-03'
+  and t.client_id in (select user_id from Users262 where banned='No')
+  and t.driver_id in (select user_id from Users262 where banned='No')
+  group by request_at
+
+
+Estimated Subtree cost - 0.233 
+Table 'Users262'. Scan count 2, logical reads 17
+Table 'Trips262'. Scan count 1, logical reads 1
+
+--------------------------------------
+create table  Trips262
+(
+ id           int,      
+ client_id    int,      
+ driver_id    int,      
+ city_id      int,      
+ status       varchar(25),     
+ request_at   date ) 
+
+
+ insert Trips262 values
+ ( 1  , 1         , 10        , 1       , 'completed           ', '2013-10-01' ),
+( 2  , 2         , 11        , 1       , 'cancelled_by_driver ', '2013-10-01' ),
+( 3  , 3         , 12        , 6       , 'completed           ', '2013-10-01' ),
+( 4  , 4         , 13        , 6       , 'cancelled_by_client ', '2013-10-01' ),
+( 5  , 1         , 10        , 1       , 'completed           ', '2013-10-02' ),
+( 6  , 2         , 11        , 6       , 'completed           ', '2013-10-02' ),
+( 7  , 3         , 12        , 6       , 'completed           ', '2013-10-02' ),
+( 8  , 2         , 12        , 12      , 'completed           ', '2013-10-03' ),
+( 9  , 3         , 10        , 12      , 'completed           ', '2013-10-03' ),
+( 10 , 4         , 13        , 12      , 'cancelled_by_driver ', '2013-10-03' )
+
+
+
+
+ create table Users262
+ (
+ user_id int,
+ banned   varchar(10), 
+ role varchar(10)
+ );
+
+ insert Users262 values
+ (  1       , 'No '    , 'client' ) ,
+( 2        , 'Yes'    , 'client' ),
+( 3        , 'No '    , 'client' ),
+( 4        , 'No '    , 'client' ),
+( 10       , 'No '    , 'driver' ),
+( 11       , 'No '    , 'driver' ),
+( 12       , 'No '    , 'driver' ),
+( 13       , 'No '    , 'driver' )

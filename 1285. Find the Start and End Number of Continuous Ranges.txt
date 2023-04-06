@@ -1,0 +1,6 @@
+1285. Find the Start and End Number of Continuous Ranges
+
+  select min(log_id) as start_id, max (log_id) as end_id from (
+	select log_id, log_id - rank () over (order by log_id) forgr from Logs
+	) r
+group by forgr

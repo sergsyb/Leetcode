@@ -1,0 +1,10 @@
+1107. New Users Daily Count
+
+  select first_login, count(*) user_count from (
+	  select user_id , min (activity_date) as first_login
+	  from Traffic
+	  where activity = 'login'
+	  group by user_id
+  ) t
+  where first_login between dateadd(day, -90, '2019-06-30') and  '2019-06-30'
+  group by first_login

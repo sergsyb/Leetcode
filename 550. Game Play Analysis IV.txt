@@ -1,0 +1,24 @@
+-- 550. Game Play Analysis IV
+-- Var1 -- with lead function
+
+ select 1.0*count (*)/(select count(distinct player_id) from  Activity550) as fraction  
+  from ( select *,lead (event_date) over (partition by  player_id order by event_date ) next_event_date
+   from Activity550 
+  ) t
+  where DATEDIFF(day,event_date, next_event_date )  =1  
+
+>>  Estimated Subtree Cost - 0.029
+>>  LIO - 2
+
+
+-- Var2 -- with left join
+ select 1.0*count(a2.player_id)/count(distinct a1.player_id) as fraction 
+ from Activity550 a1
+  left join Activity550 a2
+  on a1.player_id=a2.player_id and a1.event_date=dateadd ( day, 1, a2.event_date)
+  
+
+>>  Estimated Subtree Cost - 0.0183
+>>  LIO - 6
+
+

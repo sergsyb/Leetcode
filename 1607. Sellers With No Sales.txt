@@ -1,0 +1,7 @@
+1607. Sellers With No Sales
+
+select  seller_name from Seller s 
+left join Orders o
+on o.seller_id = s.seller_id 
+where o.seller_id is null
+and year(sale_date)=2020

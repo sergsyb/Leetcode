@@ -1,0 +1,31 @@
+
+
+-- Var1 -- with windows function SUM
+select player_id, event_date, sum (games_played) over (partition by player_id order by event_date )  games_played_so_far
+from Activity534
+
+Estimated Subtree Cost - 0.014
+LIO - 31
+
+
+-- Var2 ---- with self join ---------
+select a1.player_id, a1.event_date, sum(a2.games_played)  games_played_so_far
+from Activity534 a1
+join Activity534 a2
+on a1.player_id=a2.player_id and a1.event_date>=a2.event_date
+group by a1.player_id, a1.event_date
+order by 1,2
+
+
+Estimated Subtree Cost - 0.0184
+LIO 6
+
+-----------------------------------------------------
+
+insert  Activity534 values
+
+( 1  , 2  , '2016-03-01' , 5 ) ,
+( 1  , 2  , '2016-05-02' , 6 ) ,
+( 1  , 3  , '2017-06-25' , 1 ) ,
+( 3  , 1  , '2016-03-02' , 0 ) ,
+( 3  , 4  , '2018-07-03' , 5 ) 

@@ -1,0 +1,12 @@
+602. Friend Requests II: Who Has the Most Friends
+
+with cte1 as (
+select requester_id as user_id,  accepter_id from request_accepted602
+union all
+select accepter_id, requester_id    from request_accepted602
+)
+
+select top 1 user_id 
+from cte1
+group by user_id
+order by count(*) desc

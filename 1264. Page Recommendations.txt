@@ -1,0 +1,51 @@
+1264. Page Recommendations
+
+with all_friends as(
+select user2_id as us1_friends from Friendship1264 where user1_id=1
+union
+select user1_id from Friendship1264 where user2_id=1
+)
+
+/*
+select distinct page_id from Likes1264 where user_id in (select us1_friends from all_friends)
+and page_id not in (select page_id from Likes1264 where user_id =1)
+*/
+
+select distinct page_id from Likes1264 l  join all_friends a on l.user_id=a.us1_friends
+where page_id not in (select page_id from Likes1264 where user_id =1)
+
+
+------------------------------------------------------
+create table Friendship1264
+(
+user1_id int,
+user2_id int
+)
+
+create table Likes1264
+(
+ user_id int,
+ page_id int
+)
+
+
+insert Friendship1264 values
+
+( 1        , 2 )       ,
+( 1        , 3 )       ,
+( 1        , 4 )       ,
+( 2        , 3 )       ,
+( 2        , 4 )       ,
+( 2        , 5 )       ,
+( 6        , 1 ) 
+
+insert Likes1264 values 
+( 1       , 88 )     ,
+( 2       , 23 )     ,
+( 3       , 24 )     ,
+( 4       , 56 )     ,
+( 5       , 11 )     ,
+( 6       , 33 )     ,
+( 2       , 77 )     ,
+( 3       , 77 )     ,
+( 6       , 88 )   

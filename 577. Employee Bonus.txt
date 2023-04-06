@@ -1,0 +1,32 @@
+577. Employee Bonus
+
+ 	select name, bonus 
+	from Employee577 e
+	left join Bonus577 b
+	on e.empId=b.empId 
+	where bonus<1000  OR bonus IS NULL
+
+=============================================
+create table Employee577
+(
+ empId        int  ,
+ name       varchar (10),
+ supervisor  int,
+ salary     int
+)
+
+create table Bonus577
+(
+empId int,
+bonus int      
+)
+
+insert Employee577 values 
+( 3     , 'Brad'   , null       , 4000)   ,
+( 1     , 'John'   , 3          , 1000)   ,
+( 2     , 'Dan'    , 3          , 2000)   ,
+( 4     , 'Thomas' , 3          , 4000)   
+
+insert Bonus577 values
+( 2     , 500 )  ,
+( 4     , 2000 ) 

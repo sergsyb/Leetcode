@@ -1,0 +1,159 @@
+1384. Total Sales Amount by Year
+  
+--------- Var1 Suport max 3  years between start_sale and end_sale 
+------ The most optimal when in order 400 rows -->LIO 10 
+
+ with cte1 as(
+  select  product_id,  average_daily_sales,
+  --- sell in one year
+  case when YEAR(period_end )=YEAR(period_start) then
+  DATEDIFF(day,period_start,period_end)+1  end days_start_end,
+  case when YEAR(period_end )=YEAR(period_start) then
+  YEAR(period_start) end year_start_end,
+  
+  --- start sell in one year, end sell in next year
+  case when YEAR(period_end )-YEAR(period_start)>=1 then
+  DATEDIFF(day,period_start, DATEFROMPARTS(YEAR(period_start), 12, 31))+1 end days_to_end_year,
+  case when YEAR(period_end )-YEAR(period_start)>=1 then
+  YEAR(period_start) end year_start ,
+  
+  case when YEAR(period_end )-YEAR(period_start)>=1 then
+  DATEDIFF(day, DATEFROMPARTS(YEAR(period_end), 01, 01), period_end)+1 end days_from_start_year,
+  case when YEAR(period_end )-YEAR(period_start)>=1 then
+  YEAR(period_end) end year_end ,
+
+  --- start sell in one year, end sell in next year +1
+  case when YEAR(period_end ) -YEAR(period_start) >1 then 
+  DATEDIFF(day, DATEFROMPARTS((YEAR(period_start)+1), 01, 01), DATEFROMPARTS((YEAR(period_end)-1), 12, 31)) +1
+   end  days_between_years,
+   
+   case when YEAR(period_end) - YEAR(period_start) >1 then 
+   YEAR(period_start)+1 end as middle_year
+   from Sales1384
+   )
+
+   , cte2 as (
+   select product_id,  days_start_end as sell_days, year_start_end as sell_year, average_daily_sales
+   from cte1  
+   union all
+   select product_id, days_to_end_year, year_start , average_daily_sales
+   from cte1 
+   union all
+  select product_id, days_from_start_year, year_end , average_daily_sales
+   from cte1 
+   union all
+   select product_id, days_between_years, middle_year , average_daily_sales
+   from cte1
+   )
+
+   select p.product_id, p.product_name, c.sell_year, sum(c.average_daily_sales*c.sell_days) totall_amount
+   from cte2 c join Product1384 p on p.product_id=c.product_id
+   where sell_year is not null
+   group by p.product_id, p.product_name, c.sell_year
+   order by 1, 2
+
+   >> Estimated subtree cost -0.028
+   >> LIO 13
+
+
+--------- Var2 Suport any numbers of years between start_sale and end_sale
+------  when in order 400 rows -->LIO 9600 
+
+with recurs_sell_years as(
+	SELECT product_id,year(period_start) sell_year
+	FROM Sales1384
+	union all
+	SELECT s.product_id,sell_year +1
+	FROM Sales1384 s join recurs_sell_years sy
+	on s.product_id=sy.product_id
+	where sell_year<year(period_end)
+)
+
+, add_curr_year_and_tot_year as (
+	select s.product_id, y.sell_year, s.period_start, s.period_end, s.average_daily_sales
+	,  YEAR(s.period_end)-YEAR(s.period_start)+1 as numb_year  -- total sell year
+	, ROW_NUMBER() over (partition by s.product_id order by sell_year) -- current sell year
+	as sell_in_current_year
+	from recurs_sell_years y join Sales1384 s
+	on y.sell_year between YEAR(s.period_start) and YEAR(s.period_end)
+	and y.product_id=s.product_id
+	)
+,  sell_days_in_each_year as (
+select *, --one year
+	case when sell_in_current_year=numb_year and numb_year =1 then DATEDIFF(day,period_start,period_end)+1 		 
+		  -- first year
+		 when sell_in_current_year<numb_year and sell_in_current_year=1 then  DATEDIFF(day,period_start, DATEFROMPARTS(YEAR(period_start), 12, 31))+1 
+		 -- last year
+		 when sell_in_current_year=numb_year and numb_year >1  then  DATEDIFF(day, DATEFROMPARTS(YEAR(period_end), 01, 01), period_end)+1
+		-- middle year 
+        else DATEPART(dy,DATEFROMPARTS(sell_year,12,31)) end days_for_sell
+	from add_curr_year_and_tot_year
+)
+
+select  sd.product_id, p.product_name, sell_year, sum(sd.average_daily_sales*sd.days_for_sell) as amount
+from sell_days_in_each_year sd
+join Product1384 p
+on p.product_id=sd.product_id
+group by sd.product_id, p.product_name, sell_year
+
+
+>> Estimated sutree cost - 0.05
+>> LIO - 47
+  
+
+
+======= Var2.1 with function greatest /least 
+with recurs_sell_years as(
+	SELECT product_id,year(period_start) sell_year
+	FROM Sales1384
+	union all
+	SELECT s.product_id,sell_year +1
+	FROM Sales1384 s join recurs_sell_years sy
+	on s.product_id=sy.product_id
+	where sell_year<year(period_end)
+)
+, sales_with_days_year as (
+	select s.product_id, s.average_daily_sales , y.sell_year,
+	--greatest (s.period_start, DATEFROMPARTS(sell_year, 1 , 01)) datestart_in_year,
+	--	least(s.period_end,   DATEFROMPARTS(sell_year, 12, 31))  dateend_in_year,
+	DATEDIFF(day, greatest (s.period_start, DATEFROMPARTS(sell_year, 1 , 01)),least(s.period_end,   DATEFROMPARTS(sell_year, 12, 31)) ) +1 as days_sell_in_year
+
+	from recurs_sell_years y
+	join Sales1384 s
+	on y.sell_year between YEAR(s.period_start) and YEAR(s.period_end)
+	and y.product_id=s.product_id
+	)
+
+select p.product_id, p.product_name, s.sell_year, sum(average_daily_sales*days_sell_in_year) as amount
+from sales_with_days_year s join Product1384 p
+on s.product_id=p.product_id
+group by p.product_id, p.product_name, s.sell_year
+=============================================
+
+
+-------- Var3 generate all days and join it with Sales
+------  when in order 400 rows -->LIO 12000
+
+WITH max_end as(
+SELECT MAX(period_end) max_period_end FROM Sales1384
+)
+, CTE AS
+    (SELECT MIN(period_start) as date
+     FROM Sales1384 
+     UNION ALL
+     SELECT  DATEADD(day, 1, date)
+     FROM CTE
+     WHERE date <= (select max_period_end from max_end))
+
+ 
+SELECT 
+  s.product_id, p.product_name, convert(varchar(4), e.date) as report_year, SUM(s.average_daily_sales) as total_amount
+FROM Sales1384 s
+JOIN Product1384 p ON p.product_id = s.product_id
+JOIN CTE  e ON s.period_start<=e.date AND s.period_end>=e.date
+GROUP BY s.product_id, p.product_name, convert(varchar(4), e.date)
+ORDER BY 1,3
+OPTION (MAXRECURSION 1000)
+
+Estimate subtree cost - 0.428
+LIO - 3426
