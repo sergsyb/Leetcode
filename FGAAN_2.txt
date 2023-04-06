@@ -1,0 +1,96 @@
+------- Var1 use recursive table and group on basis Row_Number --------------
+
+with reqtab as (  -- With reverse table fild all relativies and their group (rn)
+  select person_id,  ROW_NUMBER() over (order by person_id ) rn  ---- Only person which has relative_id1/relative_id2 = NULL
+  from family_members  where relative_id1  is  null and relative_id2  is  null  
+  or (relative_id1= person_id or relative_id2= person_id ) -- OR person where person_id=relative_id
+  union all
+  select f. person_id,  rn 
+  from family_members f 
+  join reqtab r on r.person_id=f.relative_id1 or r.person_id=f.relative_id2
+  where  f.person_id <> isnull(f.relative_id1, '') and f.person_id <> isnull(f.relative_id2, '')  ---Avoid the same values in person_id and relatives 
+ --- if same values  will be presents in person_id and relatives  reqursia will never stop ---
+  
+)
+
+ , dupl as ( --- Find family members which belongs to several group
+ select r1.person_id, r1.rn rn1, r2.rn rn2 from reqtab r1 
+  join reqtab r2 on r1.person_id=r2.person_id and 
+  r1.rn<r2.rn)
+
+  , uniq_fam_gr as (--- Update group name for duplicates - use min  values
+ select  distinct r.person_id,  isnull(d.rn1, r.rn) fm_id 
+ from reqtab r left join dupl d
+ on r.rn=d.rn2
+ )
+
+  select CONCAT ('F_', ROW_NUMBER() over (order by fm_id)) as Family_id
+  , STRING_AGG(person_id, ';') as Relatives
+  from uniq_fam_gr r  group by r.fm_id
+
+=============================================================
+------- Var2 Without recursion - group on basis substring
+
+with relatives_with_gr as (			---All relative  with their family group
+	 select  relative_id1 as relative , SUBSTRING(person_id, 1,3)  as fam_group
+	 from family_members where relative_id1  is not null 
+	 union 
+	 select  relative_id2, SUBSTRING(person_id, 1,3)  
+	 from family_members where relative_id2  is not null 
+)
+, fam_members_with_family as (   -- All persons and their relatives with group
+select f.person_id,  r.fam_group from relatives_with_gr r
+  join family_members f on (f.relative_id1=r.relative or f.relative_id2=r.relative)
+union							---- + main persons
+select f.person_id,  r.fam_group from relatives_with_gr r
+  join family_members f on f.person_id=r.relative
+  )
+, wo_family as (    --- Members without family
+ select person_id, concat(SUBSTRING(person_id, 1,2), ROW_NUMBER() over (order by person_id)) fam_group
+ from family_members where relative_id1  is  null and relative_id2  is null 
+ and  person_id  not in ( select  person_id from fam_members_with_family)
+ )
+
+ select concat('FAM_', ROW_NUMBER() over (order by family)) as family_id, family from (
+	 select distinct  STRING_AGG(person_id, ',') as family
+	  from 
+	  (	select person_id, fam_group  from fam_members_with_family
+		union
+		select * from wo_family
+	  )r
+	  group by fam_group 
+	  )t
+=============================================================
+------- Var3 Use recursion - group on basis substring
+with relatives_with_gr as (			---All relative  with their family group
+	 select  relative_id1 as relative , SUBSTRING(person_id, 1,3)  as fam_group
+	 from family_members where relative_id1  is not null 
+	 union 
+	 select  relative_id2, SUBSTRING(person_id, 1,3)  
+	 from family_members where relative_id2  is not null 
+)
+, fam_members_with_family  as (
+select relative as person_id, fam_group, 1 as i from relatives_with_gr
+union all
+select fam.person_id, r.fam_group, i+1
+		 from fam_members_with_family r
+		 join family_members fam on fam.relative_id1 = r.person_id or relative_id2 = r.person_id
+where  
+  fam.person_id <> isnull(fam.relative_id1, '') and fam.person_id <> isnull(fam.relative_id2, '')  ---Avoid the same values in person_id and relatives 
+)
+
+, wo_family as (    --- Members without family
+ select person_id, concat(SUBSTRING(person_id, 1,2), ROW_NUMBER() over (order by person_id)) fam_group
+ from family_members where relative_id1  is  null and relative_id2  is null 
+ and  person_id  not in ( select  person_id from fam_members_with_family)
+ )
+
+ select concat('FAM_', ROW_NUMBER() over (order by family)) as family_id, family from (
+	 select distinct  STRING_AGG(person_id, ',') as family
+	  from 
+	  (	select  person_id, fam_group  from fam_members_with_family f
+		union
+		select * from wo_family
+	  )r
+	  group by fam_group 
+	  )t

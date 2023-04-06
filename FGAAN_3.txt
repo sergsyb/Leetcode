@@ -1,0 +1,27 @@
+with rectab as (
+	select emp_id, emp_id as emp_hierarhy  -- reporting  themselves
+	from Employee_hierarchy 
+union all								
+select r.emp_id, e.emp_id  from rectab r   -- + all direct and undirect reporting
+join Employee_hierarchy e
+on r.emp_hierarhy=e.reporting_id
+
+)
+
+select * from rectab order by 1,2
+
+==================================
+create table Employee_hierarchy
+(emp_id int, reporting_id int)
+
+insert Employee_hierarchy values 
+(1, null),
+(2 ,1 ),
+(3 , 1),
+(4 , 2),
+( 5, 2),
+( 6, 3),
+( 7, 3),
+( 8, 4),
+( 9,4 )
+
